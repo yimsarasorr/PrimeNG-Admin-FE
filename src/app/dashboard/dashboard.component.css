@@ -1,0 +1,52 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Set up PrimeNG's global variables for theming with Tailwind */
+  --font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --primary-color: #6366f1; /* Indigo-500 */
+  --primary-color-text: #ffffff;
+  --surface-0: #f3f4f6; /* Gray-100 */
+  --surface-50: #f9fafb; /* Gray-50 */
+  --surface-100: #f3f4f6; /* Gray-100 */
+  --surface-200: #e5e7eb; /* Gray-200 */
+  --surface-300: #d1d5db; /* Gray-300 */
+  --surface-400: #9ca3af; /* Gray-400 */
+  --surface-500: #6b7280; /* Gray-500 */
+  --surface-600: #4b5563; /* Gray-600 */
+  --surface-700: #374151; /* Gray-700 */
+  --surface-800: #1f2937; /* Gray-800 */
+  --surface-900: #111827; /* Gray-900 */
+  --text-color: #374151; /* Gray-700 */
+  --text-color-secondary: #6b7280; /* Gray-500 */
+  --surface-border: #e5e7eb; /* Gray-200 */
+  --content-padding: 1.5rem;
+  --inline-spacing: 0.5rem;
+  --border-radius: 0.75rem;
+  --focus-ring: 0 0 0 0.2rem var(--primary-color-text);
+  --blue-500: #6366f1;
+  --orange-500: #ef4444;
+  --gray-500: #6b7280;
+}
+
+/* body {
+  @apply bg-gray-100 font-sans text-gray-800;
+} */
+
+/* Custom styles for PrimeNG components */
+.p-sidebar {
+  width: 5rem !important; /* Make sidebar narrower */
+}
+
+/* Fix for p-buttonset rounded corners */
+.p-buttonset .p-button:first-child {
+  border-top-left-radius: var(--border-radius) !important;
+  border-bottom-left-radius: var(--border-radius) !important;
+}
+
+.p-buttonset .p-button:last-child {
+  border-top-right-radius: var(--border-radius) !important;
+  border-bottom-right-radius: var(--border-radius) !important;
+}

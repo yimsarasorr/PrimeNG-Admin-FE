@@ -1,0 +1,52 @@
+<div class="chat-container">
+  
+  <!-- LEFT SIDEBAR -->
+  <div class="chat-sidebar">
+    <div class="p-input-icon-left search-box">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" placeholder="Search" />
+    </div>
+
+    <div *ngFor="let user of users" class="chat-user">
+        <p-avatar [image]="user.avatar" shape="circle" size="large"></p-avatar>
+      <div class="user-info">
+        <div class="user-name">{{ user.name }}</div>
+        <div class="last-message">{{ user.lastMessage }}</div>
+      </div>
+      <div class="time">{{ user.time }}</div>
+      <p-badge *ngIf="user.unread > 0" [value]="user.unread" severity="info"></p-badge>
+    </div>
+  </div>
+
+  <!-- MAIN CHAT -->
+  <div class="chat-main">
+    <div class="messages">
+      <div *ngFor="let msg of messages" class="message" [ngClass]="{'own': msg.own}">
+        <p-avatar [image]="msg.avatar" shape="circle" size="normal" styleClass="mr-2"></p-avatar>
+        <div class="message-content">
+          <div class="bubble">{{ msg.content }}</div>
+          <small>{{ msg.time }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="message-input">
+      <input pInputText [(ngModel)]="newMessage" placeholder="Write your message..." />
+      <button pButton icon="pi pi-send" (click)="sendMessage()"></button>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="chat-details">
+    <h3>PrimeTek</h3>
+    <p>primetek</p>
+    <p-button label="Notification" icon="pi pi-bell"></p-button>
+    <h4>Members</h4>
+    <ul>
+      <li *ngFor="let user of users">
+        <p-avatar [image]="user.avatar" shape="circle" size="normal" styleClass="mr-2"></p-avatar>
+        {{ user.name }}
+      </li>
+    </ul>
+  </div>
+</div>
