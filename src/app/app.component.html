@@ -1,12 +1,32 @@
 <div class="layout">
   <!-- Sidebar / Topbar -->
-  <div class="card">
-    <p-menubar [model]="items">
-      <ng-template pTemplate="item" let-item>
-      <i class="{ item.icon }"></i>
-      </ng-template>
-    </p-menubar>
-  </div>
+<!-- Top Nav for large screens -->
+<div class="nav-desktop">
+  <p-menubar [model]="items"></p-menubar>
+</div>
+
+<!-- Toggle Button for small screens -->
+<div class="nav-mobile">
+  <button pButton icon="pi pi-bars" class="p-button-rounded p-button-text" (click)="sidebarVisible = true"></button>
+
+  <p-sidebar [(visible)]="sidebarVisible" position="left" [baseZIndex]="10000">
+    <div class="logo-section">
+      <i class="pi pi-shield" style="font-size: 2rem; margin-right: 8px;"></i>
+      <span class="logo-text">PrimeNG Admin</span>
+    </div>
+    <ul class="mobile-menu">
+      <li *ngFor="let item of items"
+          [class.active]="isActive(item.routerLink!)"
+          (click)="sidebarVisible = false; router.navigate([item.routerLink!])">
+        <i [class]="item.icon"></i> {{ item.label }}
+      </li>
+    </ul>
+  </p-sidebar>
+</div>
+
+<!-- Router Outlet -->
+<router-outlet></router-outlet>
+
 
   <!-- Main content -->
   <div class="main-content">

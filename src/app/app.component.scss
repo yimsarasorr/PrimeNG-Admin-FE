@@ -1,85 +1,41 @@
-
-@import "primeicons/primeicons.css";
-
-.nav-container {
-
-  background: #f9fbfd;
-  border-radius: 1rem;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100dvw;
+.nav-desktop {
+  display: none;
 }
 
-.logo {
-  font-size: 1.5rem;
-  color: #2563eb;
+.nav-mobile {
   padding: 0.5rem;
-  border: 1px solid #2563eb;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
   margin-bottom: 1rem;
 }
 
-.icon-menu {
-  border: none;
-  background: transparent;
-  width: 100%;
-
-  .p-menuitem {
-    justify-content: center;
-  }
-
-  .p-menuitem-link {
-    display: flex;
-    justify-content: center;
-    padding: 0.75rem;
-    border-radius: 10px;
-    transition: background 0.2s;
-
-    &:hover {
-      background: #eff6ff;
-    }
-
-    &.p-highlight {
-      background: #2563eb;
-      color: #fff;
-
-      i {
-        color: #fff;
-      }
-    }
-  }
-
-  .pi {
-    font-size: 1.2rem;
-    color: #6b7280;
-  }
+.mobile-menu {
+  list-style: none;
+  padding: 0;
 }
 
-/* 📱 Responsive: Top bar for small screens */
-@media (max-width: 768px) {
-  .nav-container {
-    flex-direction: row;
-    height: auto;
-    width: 100%;
-    border-radius: 0;
-    justify-content: space-around;
+.mobile-menu li {
+  padding: 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-menu li.active {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: block;
   }
-
-  .logo {
-    margin: 0;
-    border: none;
-    font-size: 1.3rem;
-  }
-
-  .icon-menu {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-
-    .p-menuitem {
-      flex: 1;
-    }
+  .nav-mobile {
+    display: none;
   }
 }

@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
 import { ButtonModule } from 'primeng/button';
@@ -33,7 +32,6 @@ interface ChatMessage {
 @Component({
   selector: 'app-chat',
   imports: [
-    RouterOutlet,
     CommonModule,
     AvatarModule,
     ButtonModule,

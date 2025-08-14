@@ -1,0 +1,35 @@
+<div class="card">
+  <div class="flex justify-content-between mb-3">
+    <h2>Inbox</h2>
+    <span class="p-input-icon-left">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" placeholder="Search..." />
+    </span>
+  </div>
+
+  <p-table [value]="messages" [paginator]="true" [rows]="5" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Subject</th>
+        <th>Sender</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-message>
+      <tr>
+        <td>{{ message.subject }}</td>
+        <td>{{ message.sender }}</td>
+        <td>{{ message.date }}</td>
+        <td>
+          <p-tag [value]="message.status" [severity]="getSeverity(message.status)"></p-tag>
+        </td>
+        <td>
+          <button pButton icon="pi pi-eye" class="p-button-rounded p-button-info" title="View"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

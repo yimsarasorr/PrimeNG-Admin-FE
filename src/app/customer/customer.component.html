@@ -1,0 +1,76 @@
+<div class="card p-4">
+  <h2>Customers</h2>
+  <p>The analysis list here shows all users</p>
+
+  <div class="flex align-items-center justify-content-between mb-4">
+    <p-chip label="{{customers.length}} Active Users" icon="pi pi-circle-fill" styleClass="text-green-500"></p-chip>
+
+    <div class="flex gap-2">
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" placeholder="Search Customers" />
+      </span>
+      <button pButton icon="pi pi-filter" class="p-button-outlined" pTooltip="Filter Customers"></button>
+      <button pButton icon="pi pi-refresh" class="p-button-outlined" pTooltip="Refresh List"></button>
+    </div>
+  </div>
+
+  <p-table 
+      [value]="customers" 
+      [paginator]="true" 
+      [rows]="5" 
+      [responsiveLayout]="'scroll'"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} customers">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width:3rem">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Company</th>
+        <th>Email</th>
+        <th>Lead Source</th>
+        <th>Status</th>
+        <th>More</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-customer>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="customer"></p-tableCheckbox>
+        </td>
+        <td>
+          <div class="flex align-items-center gap-2">
+            <p-avatar *ngIf="customer.avatar" [image]="customer.avatar" shape="circle" size="large"></p-avatar>
+            <p-avatar *ngIf="!customer.avatar" [label]="customer.initials" shape="circle" size="large"></p-avatar>
+            {{ customer.name }}
+          </div>
+        </td>
+        <td>{{ customer.title }}</td>
+        <td><i class="pi pi-briefcase mr-2"></i>{{ customer.company }}</td>
+        <td>{{ customer.email }}</td>
+        <td>{{ customer.leadSource }}</td>
+        <td>
+          <p-tag 
+            [value]="customer.status" 
+            severity="statuses[customer.status] || 'info'">
+          </p-tag>
+        </td>
+        <td>
+          <button pButton icon="pi pi-search" class="p-button-text" pTooltip="View Details"></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8" class="text-center">No customers found.</td>
+      </tr>
+    </ng-template>
+
+  </p-table>
+</div>
