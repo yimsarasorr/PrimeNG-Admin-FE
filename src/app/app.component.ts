@@ -1,51 +1,71 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { CommonModule } from '@angular/common';
-import { MenubarModule } from 'primeng/menubar';
-import { MenuModule } from 'primeng/menu';
+
+// PrimeNG modules
+import { DockModule } from 'primeng/dock';
 import { MenuItem } from 'primeng/api';
-import { SidebarModule } from 'primeng/sidebar';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     RouterOutlet,
-    FormsModule,
-    InputTextModule,
-    ButtonModule,
-    MessageModule,
     CommonModule,
-    MenubarModule,
-    MenuModule,
-    SidebarModule
+    DockModule
   ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'PrimeNG Admin';
-  items: MenuItem[] = [];
-  sidebarVisible: boolean = false;
+  dockItems: MenuItem[] = [];
+  activeRoute: string = '';
 
-  constructor(public router: Router) {}
+  constructor(public router: Router) {
+    // track route change
+    this.router.events.subscribe(() => {
+      this.activeRoute = this.router.url;
+    });
+  }
 
   ngOnInit() {
-    this.items = [
-      { icon: 'pi pi-home', label: 'Dashboard', routerLink: '/dashboard' },
-      { icon: 'pi pi-comment', label: 'Chat', routerLink: '/chat' },
-      { icon: 'pi pi-envelope', label: 'Inbox', routerLink: '/inbox' },
-      { icon: 'pi pi-th-large', label: 'Customer', routerLink: '/customer' },
-      { icon: 'pi pi-user', label: 'Profile', routerLink: '/profile' },
-      { icon: 'pi pi-video', label: 'Video', routerLink: '/video' }
+    this.dockItems = [
+      {
+        label: 'Dashboard',
+        icon: 'pi pi-home',
+        routerLink: '/dashboard'
+      },
+      {
+        label: 'Chat',
+        icon: 'pi pi-comment',
+        routerLink: '/chat'
+      },
+      {
+        label: 'Inbox',
+        icon: 'pi pi-envelope',
+        routerLink: '/inbox'
+      },
+      {
+        label: 'Card',
+        icon: 'pi pi-th-large',
+        routerLink: '/card'
+      },
+      {
+        label: 'Customer',
+        icon: 'pi pi-user',
+        routerLink: '/customer'
+      },
+      {
+        label: 'Video',
+        icon: 'pi pi-video',
+        routerLink: '/video'
+      }
     ];
   }
 
   isActive(path: string): boolean {
-    return this.router.url === path;
-  }
+  return this.router.url === path;
+}
+
 }

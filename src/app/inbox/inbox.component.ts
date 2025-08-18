@@ -8,6 +8,10 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DockModule } from 'primeng/dock';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-inbox',
@@ -19,12 +23,39 @@ import { CheckboxModule } from 'primeng/checkbox';
     ButtonModule,
     InputTextModule,
     TagModule,
-    CheckboxModule
+    CheckboxModule,
+    DockModule,
+    ProgressBarModule,
+    PanelMenuModule
   ],
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.css']
 })
 export class InboxComponent {
+
+  // Sidebar Navigation
+  navItems: MenuItem[] = [
+    {
+      label: 'Dashboard',
+      icon: 'pi pi-home',
+      routerLink: 'inbox'
+    },
+    {
+      label: 'Starred',
+      icon: 'pi pi-comments',
+      routerLink: 'inbox/star'
+    },
+    {
+      label: 'Drafts',
+      icon: 'pi pi-inbox',
+      routerLink: '/inbox/draft'
+    },
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      routerLink: '/settings'
+    }
+  ];
 
   // Example inbox messages
   messages = [
@@ -43,5 +74,4 @@ export class InboxComponent {
         return 'info';
     }
   }
-
 }

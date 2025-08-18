@@ -56,8 +56,8 @@
         <td>{{ customer.leadSource }}</td>
         <td>
           <p-tag 
-            [value]="customer.status" 
-            severity="statuses[customer.status] || 'info'">
+            value="{{ customer.status }}" 
+            severity="{{ getSeverity(customer.status) }}">
           </p-tag>
         </td>
         <td>

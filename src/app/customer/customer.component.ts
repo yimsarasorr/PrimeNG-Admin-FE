@@ -63,4 +63,17 @@ export class CustomerComponent {
     Inactive: 'danger',
     Prospect: 'info'
   };
+
+    getSeverity(status: string) {
+    switch (status) {
+      case 'Active':
+        return 'success';
+      case 'Inactive':
+        return 'danger';
+      case 'Prospect':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
 }

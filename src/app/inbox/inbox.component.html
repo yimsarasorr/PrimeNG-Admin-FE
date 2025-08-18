@@ -1,35 +1,50 @@
-<div class="card">
-  <div class="flex justify-content-between mb-3">
-    <h2>Inbox</h2>
-    <span class="p-input-icon-left">
-      <i class="pi pi-search"></i>
-      <input pInputText type="text" placeholder="Search..." />
-    </span>
+<div class="inbox-layout">
+  <!-- Sidebar -->
+  <div class="sidebar p-card">
+    <div class="sidebar-header">
+      <h3>Mails</h3>
+      <button pButton icon="pi pi-plus" class="p-button-rounded p-button-info"></button>
+    </div>
+
+    <h5 class="sidebar-title">Navigation</h5>
+    <!-- ✅ Use PrimeNG PanelMenu -->
+    <p-panelMenu [model]="navItems" styleClass="sidebar-menu"></p-panelMenu>
+
+    <h5 class="sidebar-title">Other</h5>
+    <ul class="sidebar-list">
+      <li><i class="pi pi-tag"></i> Security</li>
+      <li><i class="pi pi-tag"></i> Update</li>
+      <li><i class="pi pi-tag"></i> Marketing</li>
+      <li><i class="pi pi-tag"></i> HR</li>
+    </ul>
   </div>
 
-  <p-table [value]="messages" [paginator]="true" [rows]="5" responsiveLayout="scroll">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Subject</th>
-        <th>Sender</th>
-        <th>Date</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </ng-template>
+  <!-- Main Content -->
+  <div class="inbox-content p-card">
+    <div class="inbox-header">
+      <h3>Inbox</h3>
+      <button pButton label="New Mail" icon="pi pi-envelope" class="p-button-sm p-button-info"></button>
+    </div>
 
-    <ng-template pTemplate="body" let-message>
-      <tr>
-        <td>{{ message.subject }}</td>
-        <td>{{ message.sender }}</td>
-        <td>{{ message.date }}</td>
-        <td>
-          <p-tag [value]="message.status" [severity]="getSeverity(message.status)"></p-tag>
-        </td>
-        <td>
-          <button pButton icon="pi pi-eye" class="p-button-rounded p-button-info" title="View"></button>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+    <p-table [value]="messages" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Subject</th>
+          <th>Sender</th>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-message>
+        <tr>
+          <td>{{ message.subject }}</td>
+          <td>{{ message.sender }}</td>
+          <td>{{ message.date }}</td>
+          <td>
+            <p-tag [severity]="getSeverity(message.status)" [value]="message.status"></p-tag>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 </div>

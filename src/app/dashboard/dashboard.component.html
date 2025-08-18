@@ -1,98 +1,113 @@
-<div class="min-h-screen bg-white flex font-sans">
-    <!-- Sidebar -->
-    <div class="w-20 bg-white border-r border-gray-200 shadow-md p-4 flex flex-col items-center">
-        <div class="h-10 w-10 bg-blue-500 rounded-lg mb-8 flex items-center justify-center">
-            <span class="text-white font-bold text-lg"></span>
-        </div>
-        <div class="flex flex-col space-y-6">
-            <button pButton pRipple icon="pi pi-home" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-            <button pButton pRipple icon="pi pi-chart-line" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-            <button pButton pRipple icon="pi pi-user" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-            <button pButton pRipple icon="pi pi-th-large" class="p-button-rounded p-button-text p-2xl text-gray-600 hover:bg-blue-50"></button>
-            <button pButton pRipple icon="pi pi-cog" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-            <button pButton pRipple icon="pi pi-download" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-        </div>
-        <div class="mt-auto">
-            <p-avatar label="U" styleClass="bg-blue-500 text-white" shape="circle"></p-avatar>
-        </div>
+<div class="min-h-screen flex font-sans bg-white">
+  <!-- Sidebar -->
+  <!-- <div class="sidebar">
+    <div class="logo">
+      <span class="text-white font-bold text-lg"></span>
+    </div>
+    <div class="mt-auto">
+      <p-avatar label="U" styleClass="bg-blue-500 text-white" shape="circle"></p-avatar>
+    </div>
+  </div> -->
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="header">
+    <div class="flex-container">
+        <span class="p-input-icon-left search-box">
+        <i class="pi pi-search text-gray-400"></i>
+        <input pInputText type="text" placeholder="Search visitor..." />
+        </span>
+    </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="flex-1 p-8 bg-white">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <!-- Right: Search and Actions -->
-            <div class="flex items-center space-x-4">
-                <span class="p-input-icon-left w-64">
-                    <i class="pi pi-search text-gray-400"></i>
-                    <input pInputText type="text" placeholder="Search visitor..." class="w-full pl-8 py-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200 bg-white text-gray-900" />
-                </span>
-                <button pButton pRipple icon="pi pi-bell" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-                <div class="w-1 h-8 bg-gray-200 rounded-full"></div>
-                <button pButton pRipple icon="pi pi-calendar" class="p-button-rounded p-button-text p-button-plain text-2xl text-gray-600 hover:bg-blue-50"></button>
-            </div>
-        </div>
+    <h1 class="page-title">Welcome to Visitor Management</h1>
 
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Welcome to Visitor Management</h1>
+    <!-- Main Layout -->
+    <p-splitter layout="vertical" class="main-splitter">
+      <!-- Top: Chart -->
+      <ng-template pTemplate>
+        <p-panel header="Visitor Analytics" [toggleable]="false" class="panel-full">
+          <div class="chart-actions">
+            <button
+              pButton
+              label="Weekly"
+              (click)="setChartRange('week')"
+              [class]="chartRange === 'week' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
+            ></button>
+            <button
+              pButton
+              label="Monthly"
+              (click)="setChartRange('month')"
+              [class]="chartRange === 'month' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
+            ></button>
+            <button
+              pButton
+              label="Yearly"
+              (click)="setChartRange('year')"
+              [class]="chartRange === 'year' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
+            ></button>
+          </div>
+          <div class="chart-container">
+            <p-chart type="bar" [data]="chartData" [options]="chartOptions" class="h-[100rem]"></p-chart>
+          </div>
+        </p-panel>
+      </ng-template>
 
-        <!-- Main grid layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Visitor Analytics Chart -->
-            <div class="col-span-1 lg:col-span-2">
-                <p-panel header="Visitor Analytics" [toggleable]="false" styleClass="rounded-xl shadow bg-white border border-gray-100 mb-8">
-                    <div class="flex space-x-2 mb-4">
-                        <button pButton label="Weekly" (click)="setChartRange('week')" [class]="chartRange === 'week' ? 'p-button-primary' : 'p-button-outlined p-button-secondary'"></button>
-                        <button pButton label="Monthly" (click)="setChartRange('month')" [class]="chartRange === 'month' ? 'p-button-primary' : 'p-button-outlined p-button-secondary'"></button>
-                        <button pButton label="Yearly" (click)="setChartRange('year')" [class]="chartRange === 'year' ? 'p-button-primary' : 'p-button-outlined p-button-secondary'"></button>
-                    </div>
-                    <div class="h-64">
-                        <p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
-                    </div>
-                </p-panel>
-
-                <!-- Visitor Logs Table -->
-                <p-panel header="Visitor Logs" [toggleable]="false" styleClass="rounded-xl shadow bg-white border border-gray-100">
-                    <p-table [value]="visitorLogs" [tableStyle]="{ 'min-width': '100%' }" styleClass="rounded-lg overflow-hidden">
-                        <ng-template pTemplate="header">
-                            <tr class="bg-gray-50">
-                                <th class="py-2 px-3 text-left">ID</th>
-                                <th class="py-2 px-3 text-left">Name</th>
-                                <th class="py-2 px-3 text-left">Purpose</th>
-                                <th class="py-2 px-3 text-left">Date</th>
-                                <th class="py-2 px-3 text-left">Status</th>
-                                <th class="py-2 px-3 text-left">Time</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-visitor>
-                            <tr class="hover:bg-blue-50 transition">
-                                <td class="py-2 px-3">{{ visitor.id }}</td>
-                                <td class="py-2 px-3">{{ visitor.name }}</td>
-                                <td class="py-2 px-3">{{ visitor.purpose }}</td>
-                                <td class="py-2 px-3">{{ visitor.date }}</td>
-                                <td class="py-2 px-3">
-                                    <span [ngClass]="{
-                                        'text-green-600 font-semibold': visitor.status === 'Checked In',
-                                        'text-red-500 font-semibold': visitor.status === 'Checked Out'
-                                    }">{{ visitor.status }}</span>
-                                </td>
-                                <td class="py-2 px-3">{{ visitor.time }}</td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
-                </p-panel>
-            </div>
-
-            <!-- Visitor Statistics -->
-            <p-panel header="Visitor Statistics" [toggleable]="false" styleClass="rounded-xl shadow bg-white border border-gray-100">
-            <div class="p-d-flex p-flex-column p-m-2">
-                <p-card *ngFor="let stat of visitorStats" class="p-mb-2" [style]="{ padding: '0.5rem 1rem' }">
-                <div class="p-d-flex p-jc-between p-ai-center">
-                    <span class="p-text-bold">{{ stat.name }}</span>
-                    <span class="p-text-lg" style="color:#3b82f6">{{ stat.value }}</span>
-                </div>
-                </p-card>
-            </div>
+      <!-- Bottom: Logs + Stats -->
+      <ng-template pTemplate>
+        <p-splitter layout="horizontal" class="bottom-splitter">
+          <!-- Logs -->
+          <ng-template pTemplate>
+            <p-panel header="Visitor Logs" [toggleable]="false" class="panel-full">
+              <p-table [value]="visitorLogs">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Purpose</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                  </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-visitor>
+                  <tr>
+                    <td>{{ visitor.id }}</td>
+                    <td>{{ visitor.name }}</td>
+                    <td>{{ visitor.purpose }}</td>
+                    <td>{{ visitor.date }}</td>
+                    <td>
+                      <span
+                        [ngClass]="{
+                          'text-green-600 font-semibold': visitor.status === 'Checked In',
+                          'text-red-500 font-semibold': visitor.status === 'Checked Out'
+                        }"
+                        >{{ visitor.status }}</span
+                      >
+                    </td>
+                    <td>{{ visitor.time }}</td>
+                  </tr>
+                </ng-template>
+              </p-table>
             </p-panel>
-        </div>
-    </div>
+          </ng-template>
+
+          <!-- Stats -->
+          <ng-template pTemplate>
+            <p-panel header="Visitor Statistics" [toggleable]="false" class="panel-full">
+              <div class="stats-container">
+                <p-card *ngFor="let stat of visitorStats" class="stat-card">
+                  <div class="stat-item">
+                    <span class="stat-name">{{ stat.name }}</span>
+                    <span class="stat-value">{{ stat.value }}</span>
+                  </div>
+                </p-card>
+              </div>
+            </p-panel>
+          </ng-template>
+        </p-splitter>
+      </ng-template>
+    </p-splitter>
+  </div>
 </div>
