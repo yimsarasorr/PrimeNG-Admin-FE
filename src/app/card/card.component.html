@@ -1,0 +1,80 @@
+<p-panelGrid [columns]="2" [style]="{ width: '100%' }" [responsive]="true" columnGap="1.5rem" rowGap="1.5rem">
+
+  <!-- Profile Card -->
+  <p-panelGridColumn>
+    <p-card>
+      <div class="flex align-items-center gap-2 mb-2">
+        <p-avatar image="https://i.pravatar.cc/100" shape="circle"></p-avatar>
+        <p-panelGridColumn>
+          <h4 class="m-0">Jacob Jones</h4>
+          <p>jacobjones.co</p>
+        </p-panelGridColumn>
+      </div>
+      <p>Meet Jacob Jones, the whimsical adventurer on a quest for life’s quirks.</p>
+      <p-button label="Join" styleClass="p-button-info"></p-button>
+    </p-card>
+  </p-panelGridColumn>
+
+  <!-- Upload Files -->
+  <p-panelGridColumn>
+    <p-card header="Upload Files">
+      <p-inputText [(ngModel)]="documentName" placeholder="Document Name"></p-inputText>
+      <p-fileUpload mode="basic" name="files[]" chooseLabel="Click to upload"></p-fileUpload>
+      <p-chips [(ngModel)]="tags" placeholder="Tag (Optional)"></p-chips>
+      <p-selectButton [options]="['Everyone','Admins only']" [(ngModel)]="access"></p-selectButton>
+      <div class="flex justify-content-end gap-2 mt-3">
+        <p-button label="Cancel" styleClass="p-button-outlined"></p-button>
+        <p-button label="Upload" styleClass="p-button-primary"></p-button>
+      </div>
+    </p-card>
+  </p-panelGridColumn>
+
+  <!-- Job Card -->
+  <p-panelGridColumn>
+    <p-card>
+      <h3>Data Analyst</h3>
+      <p>Data Insights Ltd. — Senior, Full-Time — $80,000</p>
+      <p>Expert in data analysis? Join Data Insights Ltd. as a senior data analyst.</p>
+      <p-chip label="Data Analysis"></p-chip>
+      <p-chip label="Analytics"></p-chip>
+      <p-chip label="Big Data"></p-chip>
+    </p-card>
+  </p-panelGridColumn>
+
+  <!-- Add Member -->
+  <p-panelGridColumn>
+    <p-card header="Add Member">
+      <p-inputText placeholder="Email"></p-inputText>
+      <p-button label="Invite" styleClass="ml-2"></p-button>
+      <div *ngFor="let m of members" class="flex justify-content-between mt-2">
+        <p>{{ m.name }} — {{ m.email }}</p>
+        <p-button label="Select" styleClass="p-button-outlined p-button-sm"></p-button>
+      </div>
+    </p-card>
+  </p-panelGridColumn>
+
+  <!-- User Profiles -->
+  <p-panelGridColumn>
+    <p-card header="User Profiles">
+      <p-selectButton [options]="['Chilling','Do Not Disturb']" [(ngModel)]="profileMode"></p-selectButton>
+      <p-inputSwitch [(ngModel)]="sound" onLabel="Sound" offLabel="Sound"></p-inputSwitch>
+      <p-inputSwitch [(ngModel)]="wifi" onLabel="Wi-Fi" offLabel="Wi-Fi"></p-inputSwitch>
+      <p-inputSwitch [(ngModel)]="darkMode" onLabel="Dark Mode" offLabel="Dark Mode"></p-inputSwitch>
+      <p-inputSwitch [(ngModel)]="location" onLabel="Location" offLabel="Location"></p-inputSwitch>
+      <p-inputSwitch [(ngModel)]="privacy" onLabel="Privacy" offLabel="Privacy"></p-inputSwitch>
+    </p-card>
+  </p-panelGridColumn>
+
+  <!-- Forgot Password -->
+  <p-panelGridColumn>
+    <p-card header="Forgot Password">
+      <p>Verification code has been sent to email</p>
+      <p><strong>ugmail.com</strong></p>
+      <p-inputText></p-inputText>
+      <p-inputText  ></p-inputText>
+      <p-inputText  ></p-inputText>
+      <p-button ></p-button>
+    </p-card>
+  </p-panelGridColumn>
+
+</p-panelGrid>
