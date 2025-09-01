@@ -1,0 +1,26 @@
+<div class="inbox-layout flex">
+  <!-- Sidebar -->
+  <div class="sidebar p-card" style="min-width:220px;">
+    <div class="sidebar-header flex items-center justify-between mb-4">
+      <h3 class="m-0">Mails</h3>
+      <button pButton icon="pi pi-plus" class="p-button-rounded p-button-info"></button>
+    </div>
+
+    <h5 class="sidebar-title mt-4 mb-2">Navigation</h5>
+    <!-- ✅ Use PrimeNG PanelMenu with routerLink -->
+    <p-panelMenu [model]="navItems" styleClass="sidebar-menu"></p-panelMenu>
+
+    <h5 class="sidebar-title mt-4 mb-2">Other</h5>
+    <ul class="sidebar-list list-none p-0">
+      <li class="mb-2 flex items-center"><i class="pi pi-tag mr-2"></i> Security</li>
+      <li class="mb-2 flex items-center"><i class="pi pi-tag mr-2"></i> Update</li>
+      <li class="mb-2 flex items-center"><i class="pi pi-tag mr-2"></i> Marketing</li>
+      <li class="mb-2 flex items-center"><i class="pi pi-tag mr-2"></i> HR</li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 p-4">
+    <router-outlet></router-outlet>
+  </div>
+</div>

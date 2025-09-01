@@ -1,0 +1,367 @@
+<div class="card-container p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      
+      <!-- Card 1: User Profile Card -->
+      <p-card styleClass="p-card-shadow user-profile-card">
+        <div class="flex items-center space-x-4 mb-4">
+          <img src="https://placehold.co/40x40/E8DFFC/7F56D9?text=J" alt="User" class="rounded-full w-2 h-2" />
+          <div>
+            <h2 class="text-lg font-semibold m-0">Jacob Jones</h2>
+            <p class="text-sm text-gray-500 m-0">hijacobjones.co</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4 mb-4">
+          <p class="text-sm">
+            <span class="font-bold">14.K</span> Followers
+          </p>
+          <p class="text-sm">
+            <span class="font-bold">359</span> Following
+          </p>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">
+          Meet Jacob Jones, the whimsical adventurer on a quest for life's quirks. From sock mysteries to subway adventures, join him for a laughter-filled journey!
+        </p>
+        <div class="flex justify-between items-center mb-4">
+          <span class="font-semibold text-sm">Mutual Friends</span>
+          <div class="flex -space-x-2 overflow-hidden">
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/E8DFFC/7F56D9?text=A" alt="Avatar"/>
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/D1E9FF/2E90FA?text=B" alt="Avatar"/>
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/FADFDF/F04438?text=C" alt="Avatar"/>
+            <span class="inline-flex h-8 w-8 rounded-full ring-2 ring-white items-center justify-center bg-gray-100 text-xs font-medium text-gray-600">+99</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <p-button label="Joined" [text]="true" styleClass="p-button-secondary"></p-button>
+          <p-button label="Hosted" [text]="true" styleClass="p-button-secondary"></p-button>
+        </div>
+        <div class="mt-4 border-t pt-4">
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center space-x-2">
+              <img src="https://placehold.co/32x32/E8DFFC/7F56D9?text=J" alt="User" class="rounded-full w-8 h-8" />
+              <div>
+                <p class="text-sm font-semibold m-0">Jacob Jones</p>
+                <p class="text-xs text-gray-500 m-0">hijacobjones.co</p>
+              </div>
+            </div>
+            <p-button label="Join" styleClass="p-button-sm"></p-button>
+          </div>
+          <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+              <img src="https://placehold.co/32x32/D1E9FF/2E90FA?text=C" alt="User" class="rounded-full w-8 h-8" />
+              <div>
+                <p class="text-sm font-semibold m-0">Courtney Henry</p>
+                <p class="text-xs text-gray-500 m-0">cou.henry41courtney.co</p>
+              </div>
+            </div>
+            <p-button label="Join" styleClass="p-button-sm"></p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 2: Upload Files Card -->
+      <p-card styleClass="p-card-shadow upload-card">
+        <ng-template pTemplate="header">
+          <div class="flex justify-between items-center p-4">
+            <h2 class="text-lg font-semibold m-0">Upload Files</h2>
+            <i class="pi pi-times-circle cursor-pointer text-gray-500"></i>
+          </div>
+        </ng-template>
+        <div class="p-4 pt-0">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Document Name</label>
+            <input type="text" pInputText placeholder="Aura Theme" class="w-full" />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Upload Files</label>
+            <div class="upload-area text-center border-dashed border-2 border-gray-300 rounded-md p-6">
+              <i class="pi pi-cloud-upload text-3xl text-gray-400 mb-2"></i>
+              <p class="text-sm font-medium">Click to upload or drag and drop</p>
+              <p class="text-xs text-gray-500">
+                PDF, JPG, PNG, JPEG, DOC, CSV, XML, XLSX (max 10MB)
+              </p>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Tag (Optional)</label>
+            <p-chip label="ui" removable="true" styleClass="p-mr-2"></p-chip>
+            <p-chip label="redesign" removable="true" styleClass="p-mr-2"></p-chip>
+            <p-chip label="dashboard" removable="true"></p-chip>
+          </div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+              <span class="text-sm font-medium mr-2">Everyone</span>
+              <p-inputSwitch [(ngModel)]="everyoneChecked"></p-inputSwitch>
+            </div>
+            <div class="flex items-center">
+              <span class="text-sm font-medium mr-2">Admins only</span>
+              <p-inputSwitch [(ngModel)]="adminsOnlyChecked"></p-inputSwitch>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-2">
+            <p-button label="Cancel" [text]="true" styleClass="p-button-secondary"></p-button>
+            <p-button label="Upload"></p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 3: Data Analyst Job Card -->
+      <p-card styleClass="p-card-shadow job-card">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-lg font-semibold m-0">Data Analyst</h2>
+            <p class="text-sm text-gray-500 m-0">Data Insights Ltd.</p>
+          </div>
+          <i class="pi pi-bookmark text-gray-500 text-xl cursor-pointer"></i>
+        </div>
+        <div class="flex items-center space-x-4 mb-4 text-gray-600">
+          <div class="flex items-center">
+            <i class="pi pi-briefcase mr-2"></i>
+            <span class="text-sm">Senior</span>
+          </div>
+          <div class="flex items-center">
+            <i class="pi pi-clock mr-2"></i>
+            <span class="text-sm">Full-Time</span>
+          </div>
+          <div class="flex items-center">
+            <i class="pi pi-dollar mr-2"></i>
+            <span class="text-sm">$80,000</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">
+          Expert in data analysis? Join Data Insights Ltd. as a senior data analyst. Lead in the world of data with us!
+        </p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <p-tag value="Data Analysis" severity="success"></p-tag>
+          <p-tag value="Analytics" severity="info"></p-tag>
+          <p-tag value="Big Data" severity="warning"></p-tag>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex -space-x-2 overflow-hidden">
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/E8DFFC/7F56D9?text=A" alt="Avatar"/>
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/D1E9FF/2E90FA?text=B" alt="Avatar"/>
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/FADFDF/F04438?text=C" alt="Avatar"/>
+            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/32x32/D1E9FF/2E90FA?text=D" alt="Avatar"/>
+          </div>
+          <div class="text-sm text-gray-600 flex items-center">
+            12 Applicants
+            <i class="pi pi-arrow-right ml-2"></i>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 4: Add Member Card -->
+      <p-card styleClass="p-card-shadow add-member-card">
+        <ng-template pTemplate="header">
+          <div class="flex justify-between items-center p-4">
+            <h2 class="text-lg font-semibold m-0">Add Member</h2>
+            <i class="pi pi-times-circle cursor-pointer text-gray-500"></i>
+          </div>
+        </ng-template>
+        <div class="p-4 pt-0">
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <div class="p-inputgroup">
+              <input type="text" pInputText placeholder="Email" class="w-full" />
+              <p-button label="Invite"></p-button>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Members</label>
+            <div class="flex justify-between items-center mb-2">
+              <div class="flex items-center space-x-2">
+                <img src="https://placehold.co/32x32/E8DFFC/7F56D9?text=B" alt="User" class="rounded-full w-8 h-8" />
+                <div>
+                  <p class="text-sm font-semibold m-0">Brook Simmons</p>
+                  <p class="text-xs text-gray-500 m-0">brook.sim42primeng.org</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <p class="text-sm text-gray-500">Select</p>
+                <i class="pi pi-angle-down"></i>
+              </div>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+              <div class="flex items-center space-x-2">
+                <img src="https://placehold.co/32x32/D1E9FF/2E90FA?text=D" alt="User" class="rounded-full w-8 h-8" />
+                <div>
+                  <p class="text-sm font-semibold m-0">Dianne Russell</p>
+                  <p class="text-xs text-gray-500 m-0">di.russ23primeng.org</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <p class="text-sm text-gray-500">Select</p>
+                <i class="pi pi-angle-down"></i>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <img src="https://placehold.co/32x32/FADFDF/F04438?text=D" alt="User" class="rounded-full w-8 h-8" />
+                <div>
+                  <p class="text-sm font-semibold m-0">Jacob Jones</p>
+                  <p class="text-xs text-gray-500 m-0">jac.jon87primeng.org</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <p class="text-sm text-gray-500">Select</p>
+                <i class="pi pi-angle-down"></i>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Copy Link</label>
+            <div class="p-inputgroup">
+              <input type="text" pInputText value="https://www.example.com/shared-files/user12" class="w-full" readonly/>
+              <p-button label="Copy"></p-button>
+            </div>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 5: User Settings Card -->
+      <p-card styleClass="p-card-shadow settings-card">
+        <ng-template pTemplate="header">
+          <div class="p-4">
+            <h2 class="text-lg font-semibold m-0">User Profiles</h2>
+            <div class="flex items-center mt-2 p-button-group">
+              <p-button label="Chilling" styleClass="p-button-raised p-button-secondary p-button-text p-button-lg"></p-button>
+              <p-button label="Do Not Disturb" styleClass="p-button-secondary p-button-text p-button-lg"></p-button>
+            </div>
+          </div>
+        </ng-template>
+        <div class="p-4 pt-0">
+          <div class="flex justify-between items-center py-2 border-b">
+            <div class="flex items-center">
+              <i class="pi pi-volume-up mr-2"></i>
+              <span class="text-sm mr-3">Sound</span>
+            </div>
+            <p-inputSwitch [(ngModel)]="soundChecked"></p-inputSwitch>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b">
+            <div class="flex items-center">
+              <i class="pi pi-wifi mr-2"></i>
+              <span class="text-sm mr-3">Wi-Fi</span>
+            </div>
+            <p-inputSwitch [(ngModel)]="wifiChecked"></p-inputSwitch>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b">
+            <div class="flex items-center">
+              <i class="pi pi-moon mr-2"></i>
+              <span class="text-sm mr-3">Dark Mode</span>
+            </div>
+            <p-inputSwitch [(ngModel)]="darkModeChecked"></p-inputSwitch>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b">
+            <div class="flex items-center">
+              <i class="pi pi-map-marker mr-2"></i>
+              <span class="text-sm mr-3">Location Services</span>
+            </div>
+            <p-inputSwitch [(ngModel)]="locationChecked"></p-inputSwitch>
+          </div>
+          <div class="flex justify-between items-center py-2">
+            <div class="flex items-center">
+              <i class="pi pi-lock mr-2"></i>
+              <span class="text-sm mr-3">Privacy Settings</span>
+            </div>
+            <p-inputSwitch [(ngModel)]="privacyChecked"></p-inputSwitch>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 6: Password Card -->
+      <p-card styleClass="p-card-shadow password-card">
+        <ng-template pTemplate="header">
+          <div class="flex justify-between items-center p-4">
+            <h2 class="text-lg font-semibold m-0">Forgot Password</h2>
+          </div>
+        </ng-template>
+        <div class="p-4 pt-0 text-center">
+          <p class="text-sm text-gray-600 mb-4">
+            Verification code has been sent to email
+          </p>
+          <div class="relative w-full mb-4">
+            <input type="text" pInputText class="w-full text-center font-bold tracking-widest text-lg " value="u*******mgmail.com" readonly/>
+            <i class="pi pi-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ml-2"></i>
+          </div>
+          <p-button label="Resend" [text]="true" styleClass="p-button-secondary"></p-button>
+          <div class="flex justify-center space-x-2 mt-4">
+            <input type="text" pInputText class="w-12 text-center text-lg" maxLength="1" />
+            <input type="text" pInputText class="w-12 text-center text-lg" maxLength="1" />
+            <input type="text" pInputText class="w-12 text-center text-lg" maxLength="1" />
+            <input type="text" pInputText class="w-12 text-center text-lg" maxLength="1" />
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Card 7: Price Range Card -->
+      <p-card styleClass="p-card-shadow price-range-card">
+        <ng-template pTemplate="header">
+          <div class="p-4">
+            <h2 class="text-lg font-semibold m-0">Price Range</h2>
+          </div>
+        </ng-template>
+        <div class="p-4 pt-0">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm">Min Value</span>
+            <span class="text-sm">Max Value</span>
+          </div>
+          <p-slider [(ngModel)]="rangeValues" [range]="true"></p-slider>
+          <div class="flex items-center justify-between mt-4">
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon">$</span>
+              <input type="text" pInputText [value]="rangeValues[0]" />
+            </div>
+            <div class="p-inputgroup ml-2">
+              <span class="p-inputgroup-addon">$</span>
+              <input type="text" pInputText [value]="rangeValues[1]" />
+            </div>
+          </div>
+          <h3 class="font-semibold text-lg mt-4 mb-2">Popular specs</h3>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Furnished" [(ngModel)]="popularSpecs" inputId="furnished" class="mr-2"></p-checkbox>
+              <label for="furnished">Furnished</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Unfurnished" [(ngModel)]="popularSpecs" inputId="unfurnished" class="mr-2"></p-checkbox>
+              <label for="unfurnished">Unfurnished</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Detached" [(ngModel)]="popularSpecs" inputId="detached" class="mr-2"></p-checkbox>
+              <label for="detached">Detached</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Underfloor heating" [(ngModel)]="popularSpecs" inputId="underfloor" class="mr-2"></p-checkbox>
+              <label for="underfloor">Underfloor heating</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Balcony" [(ngModel)]="popularSpecs" inputId="balcony" class="mr-2"></p-checkbox>
+              <label for="balcony">Balcony</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Duplex" [(ngModel)]="popularSpecs" inputId="duplex" class="mr-2"></p-checkbox>
+              <label for="duplex">Duplex</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Triplex" [(ngModel)]="popularSpecs" inputId="triplex" class="mr-2"></p-checkbox>
+              <label for="triplex">Triplex</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Garden" [(ngModel)]="popularSpecs" inputId="garden" class="mr-2"></p-checkbox>
+              <label for="garden">Garden</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Central location" [(ngModel)]="popularSpecs" inputId="central" class="mr-2"></p-checkbox>
+              <label for="central">Central location</label>
+            </div>
+            <div class="flex items-center">
+              <p-checkbox name="group1" value="Sea view" [(ngModel)]="popularSpecs" inputId="sea-view" class="mr-2-info"></p-checkbox>
+              <label for="sea-view">Sea view</label>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-2 mt-4">
+            <p-button label="Undo" [text]="true" styleClass="p-button-secondary"></p-button>
+            <p-button label="Random" styleClass="p-button-info"></p-button>
+          </div>
+        </div>
+      </p-card>
+
+    </div>

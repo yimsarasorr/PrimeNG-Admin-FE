@@ -1,0 +1,76 @@
+.card-container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .p-card-shadow {
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .p-card-header {
+      padding: 0;
+    }
+
+    /* Adjusting PrimeNG components to match the design */
+    .p-button {
+      border-radius: 6px;
+    }
+
+    .p-button-text.p-button-secondary {
+      color: var(--text-color-secondary);
+    }
+    
+    .p-button-group .p-button {
+      border-radius: 0;
+    }
+
+    .p-button-group .p-button:first-child {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+
+    .p-button-group .p-button:last-child {
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+
+    .p-inputgroup .p-inputtext, .p-inputgroup .p-button {
+      border-radius: 6px;
+    }
+
+    .p-inputgroup .p-inputtext {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+    }
+    
+    .p-inputgroup .p-button {
+      border-top-left-radius: 0 !important;
+      border-bottom-left-radius: 0 !important;
+    }
+
+    .p-inputgroup-addon {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+
+    .upload-area {
+      cursor: pointer;
+    }
+
+    .p-tag {
+      border-radius: 9999px; /* full rounded */
+    }
+
+    .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+      background-color: var(--primary-color);
+    }
+
+    .p-slider .p-slider-handle {
+      border-color: var(--primary-color);
+    }
+
+    .p-slider .p-slider-range {
+      background-color: var(--primary-color);
+    }
