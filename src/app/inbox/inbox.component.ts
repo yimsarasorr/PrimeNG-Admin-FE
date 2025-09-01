@@ -18,7 +18,6 @@ import { MenuItem } from 'primeng/api';
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -26,7 +25,8 @@ import { MenuItem } from 'primeng/api';
     CheckboxModule,
     DockModule,
     ProgressBarModule,
-    PanelMenuModule
+    PanelMenuModule,
+    RouterOutlet
   ],
   templateUrl: './inbox.component.html',
   styleUrls: ['./inbox.component.css']
@@ -36,14 +36,14 @@ export class InboxComponent {
   // Sidebar Navigation
   navItems: MenuItem[] = [
     {
-      label: 'Dashboard',
-      icon: 'pi pi-home',
-      routerLink: 'inbox'
+      label: 'Inbox',
+      icon: 'pi pi-envelope',
+      routerLink: '/inbox/list'
     },
     {
       label: 'Starred',
       icon: 'pi pi-comments',
-      routerLink: 'inbox/star'
+      routerLink: '/inbox/star'
     },
     {
       label: 'Drafts',
@@ -53,7 +53,7 @@ export class InboxComponent {
     {
       label: 'Settings',
       icon: 'pi pi-cog',
-      routerLink: '/settings'
+      routerLink: '/inbox/settings'
     }
   ];
 

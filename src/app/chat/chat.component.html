@@ -1,13 +1,13 @@
 <div class="chat-container">
   
-  <!-- LEFT SIDEBAR -->
+
   <div class="chat-sidebar">
     <div class="p-input-icon-left search-box">
       <i class="pi pi-search"></i>
       <input pInputText type="text" placeholder="Search" />
     </div>
 
-    <div *ngFor="let user of users" class="chat-user">
+    <div *ngFor="let user of users" class="chat-user" (click)="selectUser(user)" [class.active]="selectedUser?.id === user.id">
         <p-avatar [image]="user.avatar" shape="circle" size="large"></p-avatar>
       <div class="user-info">
         <div class="user-name">{{ user.name }}</div>
@@ -18,10 +18,10 @@
     </div>
   </div>
 
-  <!-- MAIN CHAT -->
+
   <div class="chat-main">
     <div class="messages">
-      <div *ngFor="let msg of messages" class="message" [ngClass]="{'own': msg.own}">
+      <div *ngFor="let msg of filteredMessages" class="message" [ngClass]="{'own': msg.own}">
         <p-avatar [image]="msg.avatar" shape="circle" size="normal" styleClass="mr-2"></p-avatar>
         <div class="message-content">
           <div class="bubble">{{ msg.content }}</div>
@@ -36,17 +36,21 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDEBAR -->
-  <div class="chat-details">
-    <h3>PrimeTek</h3>
-    <p>primetek</p>
-    <p-button label="Notification" icon="pi pi-bell"></p-button>
-    <h4>Members</h4>
-    <ul>
-      <li *ngFor="let user of users">
-        <p-avatar [image]="user.avatar" shape="circle" size="normal" styleClass="mr-2"></p-avatar>
-        {{ user.name }}
-      </li>
-    </ul>
+
+  <!-- Right Sidebar: Show selected user's data -->
+  <div class="chat-details" *ngIf="selectedUser">
+    <h3>{{ selectedUser.name }}</h3>
+    <p>
+      <p-avatar [image]="selectedUser.avatar" shape="circle" size="large" styleClass="mr-2"></p-avatar>
+      <span class="ml-2">{{ selectedUser.online ? 'Online' : 'Offline' }}</span>
+    </p>
+    <p><b>Last Message:</b> {{ selectedUser.lastMessage }}</p>
+    <p><b>Time:</b> {{ selectedUser.time }}</p>
+    
+  </div>
+
+  <!-- Optionally, show a placeholder if no user is selected -->
+  <div class="chat-details" *ngIf="!selectedUser">
+    <h3>Select a chat to view details</h3>
   </div>
 </div>

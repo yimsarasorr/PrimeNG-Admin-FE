@@ -1,79 +1,137 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
-import { CheckboxModule } from 'primeng/checkbox';
 import { AvatarModule } from 'primeng/avatar';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { CardModule } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
+import { DynamicDialogModule, DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
-interface Customer {
-  name: string;
-  avatar?: string;
-  initials?: string;
-  title: string;
-  company: string;
-  email: string;
-  leadSource: string;
-  status: 'Active' | 'Inactive' | 'Prospect';
-}
+import { ChatDialogComponent } from './chat-dialog/chat-dialog.component';
+import { ChatService } from '../service/chat.service';
 
 @Component({
   selector: 'app-customer',
-  standalone: true, // <-- important for Angular 16+ standalone component
+  standalone: true,
   imports: [
     CommonModule,
     RouterModule,
     FormsModule,
     TableModule,
     ButtonModule,
-    InputTextModule,
     TagModule,
-    CheckboxModule,
     AvatarModule,
     BadgeModule,
     OverlayBadgeModule,
     CardModule,
-    ChipModule
+    ChipModule,
+    DynamicDialogModule
   ],
+  providers: [DialogService],
   templateUrl: './customer.component.html',
   styleUrls: ['./customer.component.css']
 })
-export class CustomerComponent {
-  customers: Customer[] = [
-    { name: 'Brook Simmons', avatar: 'assets/brook.jpg', title: 'Sales Executive', company: 'Mistranet', email: 'hi@brooksmnns.co', leadSource: 'Linkedin', status: 'Active' },
-    { name: 'Dianne Russell', avatar: 'assets/dianne.jpg', title: 'CEO', company: 'BriteMank', email: 'hi@diannerussell.com', leadSource: 'Website', status: 'Inactive' },
-    { name: 'Amy Elsner', avatar: 'assets/amy.jpg', title: 'Product Manager', company: 'ZenTrailMs', email: 'hi@amyelsner.com', leadSource: 'Cold Call', status: 'Prospect' },
-    { name: 'Jacob Jones', avatar: 'assets/jacob.jpg', title: 'Manager', company: 'Streamlinz', email: 'jacobjones@gmail.com', leadSource: 'Partner', status: 'Prospect' },
-    { name: 'Cameron Watson', initials: 'CW', title: 'Product Manager', company: 'BriteMank', email: 'hi@cameronwilliamson.com', leadSource: 'Social Media', status: 'Active' },
-    { name: 'Wade Warren', initials: 'WW', title: 'Director', company: 'Streamlinz', email: 'hi@annetteblack.com', leadSource: 'Cold Call', status: 'Inactive' },
-    { name: 'Guy Hawkins', avatar: 'assets/guy.jpg', title: 'Director', company: 'Wavelength', email: 'hi@darrellsteward.com', leadSource: 'Linkedin', status: 'Active' },
-    { name: 'Annette Black', avatar: 'assets/annette.jpg', title: 'Manager', company: 'Wavelength', email: 'jeromebell@gmail.com', leadSource: 'Website', status: 'Inactive' }
+export class CustomerComponent implements OnInit, OnDestroy {
+  allCustomers = [
+    {
+      id: 1,
+      name: 'Cody Fisher',
+      avatar: 'https://i.pravatar.cc/40?img=1',
+      title: 'Software Engineer',
+      company: 'PrimeTek',
+      email: 'cody@primetek.com',
+      status: 'Active',
+      online: true
+    },
+    {
+      id: 2,
+      name: 'PrimeTek Team',
+      avatar: 'https://i.pravatar.cc/40?img=2',
+      title: 'Team',
+      company: 'PrimeTek',
+      email: 'team@primetek.com',
+      status: 'Active',
+      online: true
+    },
+    {
+      id: 3,
+      name: 'Jerome Bell',
+      avatar: 'https://i.pravatar.cc/40?img=3',
+      title: 'Product Manager',
+      company: 'PrimeTek',
+      email: 'jerome@primetek.com',
+      status: 'Inactive',
+      online: true
+    }
   ];
 
-  statuses = {
-    Active: 'success',
-    Inactive: 'danger',
-    Prospect: 'info'
-  };
+  ref: DynamicDialogRef | undefined;
+  private routeSub!: Subscription;
 
-    getSeverity(status: string) {
+  constructor(
+    private dialogService: DialogService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private chatService: ChatService
+  ) {}
+
+  ngOnInit() {
+    this.routeSub = this.route.queryParams.subscribe(params => {
+      const id = params['id'];
+      if (id) {
+        const customer = this.allCustomers.find(c => c.id === +id);
+        if (customer) {
+          this.openChat(customer, false);
+        }
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.routeSub) this.routeSub.unsubscribe();
+    if (this.ref) this.ref.close();
+  }
+
+  getSeverity(status: string): string {
     switch (status) {
-      case 'Active':
-        return 'success';
-      case 'Inactive':
-        return 'danger';
-      case 'Prospect':
-        return 'info';
-      default:
-        return 'secondary';
+      case 'Active': return 'success';
+      case 'Inactive': return 'secondary';
+      default: return 'info';
     }
+  }
+
+  openChat(customer: any, updateUrl: boolean = true) {
+    if (updateUrl) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: customer.id },
+        queryParamsHandling: 'merge'
+      });
+    }
+
+    this.ref = this.dialogService.open(ChatDialogComponent, {
+      data: { userId: customer.id, name: customer.name, avatar: customer.avatar },
+      header: `${customer.name} - Chat`,
+      style: { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' },
+      contentStyle: { height: '100%' },
+      modal: true,
+      dismissableMask: true,
+      baseZIndex: 10000
+    });
+
+    this.ref.onClose.subscribe(() => {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: null },
+        queryParamsHandling: 'merge'
+      });
+    });
   }
 }

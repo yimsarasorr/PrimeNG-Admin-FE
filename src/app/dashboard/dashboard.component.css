@@ -1,4 +1,4 @@
-/* Layout */
+/* /* Layout
 .sidebar {
   width: 5rem;
   background: #fff;
@@ -44,8 +44,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end; /* push content to right */
-  gap: 1rem; /* optional spacing */
-}
+  /* gap: 1rem; /* optional spacing */
+/* }
 
 
 .page-title {
@@ -53,44 +53,44 @@
   font-weight: 700;
   color: #111827;
   margin-bottom: 1rem;
-}
+} */
 
 /* Splitters */
-.main-splitter {
+/* .main-splitter {
   height: calc(100vh - 120px);
 }
 
 .bottom-splitter {
   height: 100%;
-}
+} */
 
 /* Panels */
-.panel-full {
+/* .panel-full {
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-}
+} */
 
 /* Chart */
-.chart-actions {
+/* .chart-actions {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
-}
+} */
 
-.chart-container {
+/* .chart-container {
   flex: 1;
   min-height: 300px;
-}
+} */
 
 /* Stats */
-.stats-container {
+/* .stats-container {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
+} */
+/* 
 .stat-card {
   padding: 0.5rem 1rem;
 }
@@ -114,3 +114,4 @@
 .p-chart{
   height: 100%;
 }
+  /* Chart */

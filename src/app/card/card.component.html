@@ -3,7 +3,7 @@
       <!-- Card 1: User Profile Card -->
       <p-card styleClass="p-card-shadow user-profile-card">
         <div class="flex items-center space-x-4 mb-4">
-          <img src="https://placehold.co/40x40/E8DFFC/7F56D9?text=J" alt="User" class="rounded-full w-10 h-10" />
+          <img src="https://placehold.co/40x40/E8DFFC/7F56D9?text=J" alt="User" class="rounded-full w-2 h-2" />
           <div>
             <h2 class="text-lg font-semibold m-0">Jacob Jones</h2>
             <p class="text-sm text-gray-500 m-0">hijacobjones.co</p>
@@ -231,35 +231,35 @@
           <div class="flex justify-between items-center py-2 border-b">
             <div class="flex items-center">
               <i class="pi pi-volume-up mr-2"></i>
-              <span class="text-sm">Sound</span>
+              <span class="text-sm mr-3">Sound</span>
             </div>
             <p-inputSwitch [(ngModel)]="soundChecked"></p-inputSwitch>
           </div>
           <div class="flex justify-between items-center py-2 border-b">
             <div class="flex items-center">
               <i class="pi pi-wifi mr-2"></i>
-              <span class="text-sm">Wi-Fi</span>
+              <span class="text-sm mr-3">Wi-Fi</span>
             </div>
             <p-inputSwitch [(ngModel)]="wifiChecked"></p-inputSwitch>
           </div>
           <div class="flex justify-between items-center py-2 border-b">
             <div class="flex items-center">
               <i class="pi pi-moon mr-2"></i>
-              <span class="text-sm">Dark Mode</span>
+              <span class="text-sm mr-3">Dark Mode</span>
             </div>
             <p-inputSwitch [(ngModel)]="darkModeChecked"></p-inputSwitch>
           </div>
           <div class="flex justify-between items-center py-2 border-b">
             <div class="flex items-center">
               <i class="pi pi-map-marker mr-2"></i>
-              <span class="text-sm">Location Services</span>
+              <span class="text-sm mr-3">Location Services</span>
             </div>
             <p-inputSwitch [(ngModel)]="locationChecked"></p-inputSwitch>
           </div>
           <div class="flex justify-between items-center py-2">
             <div class="flex items-center">
               <i class="pi pi-lock mr-2"></i>
-              <span class="text-sm">Privacy Settings</span>
+              <span class="text-sm mr-3">Privacy Settings</span>
             </div>
             <p-inputSwitch [(ngModel)]="privacyChecked"></p-inputSwitch>
           </div>
@@ -278,8 +278,8 @@
             Verification code has been sent to email
           </p>
           <div class="relative w-full mb-4">
-            <input type="text" pInputText class="w-full text-center font-bold tracking-widest text-lg" value="u*******mgmail.com" readonly/>
-            <i class="pi pi-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" pInputText class="w-full text-center font-bold tracking-widest text-lg " value="u*******mgmail.com" readonly/>
+            <i class="pi pi-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 ml-2"></i>
           </div>
           <p-button label="Resend" [text]="true" styleClass="p-button-secondary"></p-button>
           <div class="flex justify-center space-x-2 mt-4">
@@ -353,13 +353,13 @@
               <label for="central">Central location</label>
             </div>
             <div class="flex items-center">
-              <p-checkbox name="group1" value="Sea view" [(ngModel)]="popularSpecs" inputId="sea-view" class="mr-2"></p-checkbox>
+              <p-checkbox name="group1" value="Sea view" [(ngModel)]="popularSpecs" inputId="sea-view" class="mr-2-info"></p-checkbox>
               <label for="sea-view">Sea view</label>
             </div>
           </div>
           <div class="flex justify-end space-x-2 mt-4">
             <p-button label="Undo" [text]="true" styleClass="p-button-secondary"></p-button>
-            <p-button label="Random"></p-button>
+            <p-button label="Random" styleClass="p-button-info"></p-button>
           </div>
         </div>
       </p-card>

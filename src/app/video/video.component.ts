@@ -24,7 +24,6 @@ interface Video {
   standalone: true, // ✅ standalone component
   imports: [
     CommonModule,
-    RouterOutlet,
     DockModule,
     InputTextModule,
     CarouselModule,

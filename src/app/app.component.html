@@ -1,24 +1,46 @@
-<div class="layout">
+<div class="layout flex h-screen overflow-hidden">
   <!-- Sidebar -->
-  <div class="sidebar p-3 surface-card border-round shadow-1">
-    <div class="dock-wrapper">
-      <ng-container *ngFor="let item of dockItems">
-        <button
-          pButton
-          type="button"
-          class="dock-btn p-button-info"
-          [class.active]="isActive(item.routerLink)"
-          (click)="router.navigate([item.routerLink])"
-        >
+  <div class="h-full flex flex-column justify-between p-3 border-round surface-50 dark:surface-900 shadow-1 w-5rem">
+    
+    <!-- Top Section -->
+    <div class="flex flex-column align-items-center gap-4">
+      <!-- Logo -->
+      <div class="w-3rem h-3rem border-round-lg flex align-items-center justify-content-center border-1 border-primary">
+        <i class="pi pi-prime text-primary text-2xl"></i>
+      </div>
+
+      <!-- Menu -->
+      <div class="flex flex-column gap-2 mt-4 w-full">
+        <div *ngFor="let item of topMenu"
+             (click)="navigate(item.route)"
+             class="flex align-items-center justify-content-center p-2 border-round cursor-pointer transition-colors"
+             [ngClass]="{'bg-primary text-primary-contrast': isActive(item.route), 'text-600 hover:surface-200': !isActive(item.route)}">
           <i [class]="item.icon"></i>
-          
-        </button>
-      </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="flex flex-column align-items-center gap-3">
+      <div *ngFor="let item of bottomMenu"
+           (click)="navigate(item.route)"
+           class="flex align-items-center justify-content-center p-2 border-round cursor-pointer w-full transition-colors"
+           [ngClass]="{'bg-primary text-primary-contrast': isActive(item.route), 'text-600 hover:surface-200': !isActive(item.route)}">
+        <i [class]="item.icon"></i>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- User Avatar -->
+      <p-avatar image="https://www.primefaces.org/cdn/primevue/images/landing/apps/main-avatar.png"
+                shape="circle"
+                size="large">
+      </p-avatar>
     </div>
   </div>
 
   <!-- Main Content -->
-  <div class="main-content p-3 surface-card border-round shadow-1">
+  <div class="main-content p-3 surface-card border-round shadow-1 flex-1 h-screen overflow-y-auto">
     <router-outlet></router-outlet>
   </div>
 </div>
