@@ -1,41 +1,38 @@
-<div class="flex flex-col h-full bg-gray-50">
+<div class="chat-main">
   <!-- Header -->
-  <div class="flex items-center p-4 border-b bg-white shadow-sm sticky top-0 z-10">
-    <p-avatar [image]="avatar" shape="circle"></p-avatar>
-    <div class="ml-3">
-      <h2 class="text-lg font-semibold">{{ name }}</h2>
-      <p class="text-sm text-gray-500">Online</p>
+  <div class="chat-header">
+    <p-avatar [image]="avatar" shape="circle" size="large" styleClass="mr-2"></p-avatar>
+    <div>
+      <h3 class="chat-title">{{ name }}</h3>
+      <small class="chat-status">Online</small>
     </div>
     <button 
       pButton 
       icon="pi pi-times" 
-      class="ml-auto p-button-text" 
+      class="ml-auto p-button-rounded p-button-text" 
       (click)="closeDialog()">
     </button>
   </div>
 
   <!-- Messages -->
-  <div #messagesContainer class="flex-1 flex flex-col justify-end overflow-y-auto p-4 space-y-4">
-    <div *ngFor="let msg of messages" class="flex"
-         [ngClass]="{'justify-end': msg.own, 'justify-start': !msg.own}">
-      <!-- Avatar for other user -->
-      <p-avatar *ngIf="!msg.own" [image]="avatar" shape="circle" class="mr-2 w-8 h-8"></p-avatar>
-
-      <div class="max-w-xs px-4 py-2 rounded-2xl shadow-sm relative"
-           [ngClass]="msg.own 
-             ? 'bg-blue-500 text-white rounded-br-none' 
-             : 'bg-white text-gray-900 border rounded-bl-none'">
-        <p>{{ msg.content }}</p>
-        <span class="text-[10px] text-gray-400 block text-right mt-1">{{ msg.time }}</span>
+  <div class="messages">
+    <div *ngFor="let msg of messages" class="message" [ngClass]="{'own': msg.own}">
+      <p-avatar [image]="msg.own ? 'assets/me-avatar.png' : avatar" shape="circle" size="normal" styleClass="mr-2"></p-avatar>
+      <div class="message-content">
+        <div class="bubble">{{ msg.content }}</div>
+        <small>{{ msg.time }}</small>
       </div>
     </div>
   </div>
 
   <!-- Input -->
-  <div class="p-3 border-t bg-white flex items-center gap-2 sticky bottom-0">
-    <input type="text" pInputText [(ngModel)]="newMessage" 
-           placeholder="Type a message..." 
-           class="flex-1 rounded-full px-4 py-2 border focus:outline-none" />
+  <div class="message-input">
+    <input 
+      pInputText 
+      [(ngModel)]="newMessage" 
+      placeholder="Write your message..." 
+      class="flex-1"
+    />
     <button pButton icon="pi pi-send" class="p-button-rounded p-button-primary" (click)="sendMessage()"></button>
   </div>
 </div>
