@@ -15,7 +15,6 @@ import { ChipModule } from 'primeng/chip';
 import { DynamicDialogModule, DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { ChatDialogComponent } from './chat-dialog/chat-dialog.component';
-import { ChatService } from '../service/chat.service';
 
 @Component({
   selector: 'app-customer',
@@ -40,36 +39,14 @@ import { ChatService } from '../service/chat.service';
 })
 export class CustomerComponent implements OnInit, OnDestroy {
   allCustomers = [
-    {
-      id: 1,
-      name: 'Cody Fisher',
-      avatar: 'https://i.pravatar.cc/40?img=1',
-      title: 'Software Engineer',
-      company: 'PrimeTek',
-      email: 'cody@primetek.com',
-      status: 'Active',
-      online: true
-    },
-    {
-      id: 2,
-      name: 'PrimeTek Team',
-      avatar: 'https://i.pravatar.cc/40?img=2',
-      title: 'Team',
-      company: 'PrimeTek',
-      email: 'team@primetek.com',
-      status: 'Active',
-      online: true
-    },
-    {
-      id: 3,
-      name: 'Jerome Bell',
-      avatar: 'https://i.pravatar.cc/40?img=3',
-      title: 'Product Manager',
-      company: 'PrimeTek',
-      email: 'jerome@primetek.com',
-      status: 'Inactive',
-      online: true
-    }
+    { id: 1, name: 'Cody Fisher', avatar: 'https://i.pravatar.cc/40?img=1', title: 'Software Engineer', company: 'PrimeTek', email: 'cody@primetek.com', status: 'Active', online: true },
+    { id: 2, name: 'PrimeTek Team', avatar: 'https://i.pravatar.cc/40?img=2', title: 'Team', company: 'PrimeTek', email: 'team@primetek.com', status: 'Active', online: true },
+    { id: 3, name: 'Jerome Bell', avatar: 'https://i.pravatar.cc/40?img=3', title: 'Product Manager', company: 'PrimeTek', email: 'jerome@primetek.com', status: 'Inactive', online: true },
+    { id: 4, name: 'Courtney Henry', avatar: 'https://i.pravatar.cc/40?img=4', title: 'Designer', company: 'PrimeTek', email: 'courtney@primetek.com', status: 'Active', online: false },
+    { id: 5, name: 'Theresa Webb', avatar: 'https://i.pravatar.cc/40?img=5', title: 'QA Engineer', company: 'PrimeTek', email: 'theresa@primetek.com', status: 'Active', online: true },
+    { id: 6, name: 'Wade Warren', avatar: 'https://i.pravatar.cc/40?img=6', title: 'DevOps Engineer', company: 'PrimeTek', email: 'wade@primetek.com', status: 'Inactive', online: false },
+    { id: 7, name: 'Jenny Wilson', avatar: 'https://i.pravatar.cc/40?img=7', title: 'HR Manager', company: 'PrimeTek', email: 'jenny@primetek.com', status: 'Active', online: true },
+    { id: 8, name: 'Kristin Watson', avatar: 'https://i.pravatar.cc/40?img=8', title: 'Marketing Specialist', company: 'PrimeTek', email: 'kristin@primetek.com', status: 'Inactive', online: false }
   ];
 
   ref: DynamicDialogRef | undefined;
@@ -78,18 +55,27 @@ export class CustomerComponent implements OnInit, OnDestroy {
   constructor(
     private dialogService: DialogService,
     private route: ActivatedRoute,
-    private router: Router,
-    private chatService: ChatService
+    private router: Router
   ) {}
 
   ngOnInit() {
+    const initialChatId = this.route.snapshot.queryParams['chatId'];
+    if (initialChatId) {
+      const customer = this.allCustomers.find(c => c.id === +initialChatId);
+      if (customer) {
+        this.openChat(customer, false);
+      }
+    }
+
     this.routeSub = this.route.queryParams.subscribe(params => {
-      const id = params['id'];
-      if (id) {
-        const customer = this.allCustomers.find(c => c.id === +id);
+      const chatId = params['chatId'];
+      if (chatId) {
+        const customer = this.allCustomers.find(c => c.id === +chatId);
         if (customer) {
           this.openChat(customer, false);
         }
+      } else if (!chatId && this.ref) {
+        this.ref.close();
       }
     });
   }
@@ -111,7 +97,7 @@ export class CustomerComponent implements OnInit, OnDestroy {
     if (updateUrl) {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { id: customer.id },
+        queryParams: { chatId: customer.id },
         queryParamsHandling: 'merge'
       });
     }
@@ -129,7 +115,7 @@ export class CustomerComponent implements OnInit, OnDestroy {
     this.ref.onClose.subscribe(() => {
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { id: null },
+        queryParams: { chatId: null },
         queryParamsHandling: 'merge'
       });
     });

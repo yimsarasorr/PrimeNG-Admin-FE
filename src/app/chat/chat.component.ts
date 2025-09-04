@@ -8,29 +8,12 @@ import { RippleModule } from 'primeng/ripple';
 import { FormsModule } from '@angular/forms';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
-import { ActivatedRoute, Router } from '@angular/router'; // <-- Import ActivatedRoute and Router
-
-interface ChatUser {
-  id: number; // Add id
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  online: boolean;
-}
-
-interface ChatMessage {
-  userId: number; // Add userId
-  sender: string;
-  avatar: string;
-  content: string;
-  time: string;
-  own?: boolean;
-}
+import { ActivatedRoute, Router } from '@angular/router';
+import { ChatService, ChatUser, ChatMessage } from '../service/chat.service';
 
 @Component({
   selector: 'app-chat',
+  standalone: true,
   imports: [
     CommonModule,
     AvatarModule,
@@ -46,22 +29,17 @@ interface ChatMessage {
   styleUrls: ['./chat.component.css']
 })
 export class ChatComponent {
-  users: ChatUser[] = [
-    { id: 1, name: 'Cody Fisher', avatar: 'https://i.pravatar.cc/40?img=1', lastMessage: "Hey there! I've heard about...", time: '12:30', unread: 8, online: true },
-    { id: 2, name: 'PrimeTek Team', avatar: 'https://i.pravatar.cc/40?img=2', lastMessage: "Let's implement PrimeNG...", time: '11:15', unread: 0, online: true },
-    { id: 3, name: 'Jerome Bell', avatar: 'https://i.pravatar.cc/40?img=3', lastMessage: "Absolutely! PrimeNG's...", time: '11:15', unread: 6, online: true }
-  ];
-
-  messages: ChatMessage[] = [
-    { userId: 1, sender: 'Cody Fisher', avatar: 'https://i.pravatar.cc/40?img=1', content: "Awesome! What's the standout feature?", time: '11:15' },
-    { userId: 2, sender: 'PrimeTek Team', avatar: 'https://i.pravatar.cc/40?img=2', content: "PrimeNG rocks! Simplifies UI dev with versatile components.", time: '11:16', own: true },
-    { userId: 1, sender: 'Cody Fisher', avatar: 'https://i.pravatar.cc/40?img=1', content: "Intriguing! Tell us more about its impact.", time: '11:17' }
-  ];
-
+  users: ChatUser[] = [];
   newMessage: string = '';
   selectedUser: ChatUser | null = null;
 
-  constructor(private route: ActivatedRoute, private router: Router) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private chatService: ChatService
+  ) {
+    this.users = this.chatService.getUsers();
+
     this.route.queryParams.subscribe(params => {
       const userId = +params['userId'];
       if (userId) {
@@ -75,7 +53,7 @@ export class ChatComponent {
 
   sendMessage() {
     if (this.newMessage.trim() && this.selectedUser) {
-      this.messages.push({
+      this.chatService.addMessage({
         userId: this.selectedUser.id,
         sender: 'You',
         avatar: 'https://i.pravatar.cc/40?img=4',
@@ -91,13 +69,13 @@ export class ChatComponent {
     this.selectedUser = user;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { userId: user.id },
+      queryParams: { id: user.id },
       queryParamsHandling: 'merge'
     });
   }
 
-  get filteredMessages() {
+  get filteredMessages(): ChatMessage[] {
     if (!this.selectedUser) return [];
-    return this.messages.filter(msg => msg.userId === this.selectedUser!.id);
+    return this.chatService.getMessagesForUser(this.selectedUser.id);
   }
 }

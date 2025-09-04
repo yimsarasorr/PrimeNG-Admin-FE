@@ -1,64 +1,116 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
+
 import { DockModule } from 'primeng/dock';
 import { InputTextModule } from 'primeng/inputtext';
 import { CarouselModule } from 'primeng/carousel';
 import { CardModule } from 'primeng/card';
-import { TabMenuModule } from 'primeng/tabmenu';   // ✅ use TabMenuModule
+import { TabMenuModule } from 'primeng/tabmenu';
 import { AvatarModule } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
-import { ButtonModule } from 'primeng/button';     // ✅ for pButton
-import { MenuItem } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { DynamicDialogModule, DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
-interface Video {
-  title: string;
-  category: string;
-  genres: string;
-  rating: number;
-  image: string;
-}
+import { MenuItem } from 'primeng/api';
+import { VideoService, Video } from '../service/video.service';
+import { VideoDialogComponent } from './video-dialog/video-dialog.component';
 
 @Component({
   selector: 'app-video',
-  standalone: true, // ✅ standalone component
+  standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     DockModule,
     InputTextModule,
     CarouselModule,
     CardModule,
-    TabMenuModule,   // ✅
+    TabMenuModule,
     AvatarModule,
     AvatarGroupModule,
-    ButtonModule     // ✅
+    ButtonModule,
+    DynamicDialogModule
   ],
+  providers: [DialogService],
   templateUrl: './video.component.html',
   styleUrls: ['./video.component.css']
 })
-export class VideoComponent {
-  keepWatching: Video[] = [
-    { title: 'Heat', category: 'Drama', genres: 'Action, Crime, Drama', rating: 4.7, image: 'https://i.ibb.co/6nM6L5f/heat.jpg' },
-    { title: 'Batman Begins', category: 'Drama', genres: 'Action, Crime, Drama', rating: 4.8, image: 'https://i.ibb.co/vqHcbtJ/batman.jpg' },
-    { title: 'Leon', category: 'Drama', genres: 'Action, Crime, Drama', rating: 4.3, image: 'https://i.ibb.co/qJNw1ys/leon.jpg' },
-    { title: 'Matrix', category: 'Sci-Fi', genres: 'Action, Sci-Fi', rating: 4.9, image: 'https://i.ibb.co/XXmcyCG/matrix.jpg' },
-    { title: 'Fight Club', category: 'Drama', genres: 'Drama', rating: 4.4, image: 'https://i.ibb.co/7CptjBQ/fightclub.jpg' }
-  ];
-
-  popular: Video[] = [
-    { title: 'Twelve Angry Men', category: 'Drama', genres: 'Crime, Drama', rating: 4.6, image: 'https://i.ibb.co/99tN0nD/12angry.jpg' },
-    { title: 'Saving Private Ryan', category: 'War', genres: 'Drama, War', rating: 4.4, image: 'https://i.ibb.co/pQ2mZfc/saving.jpg' },
-    { title: 'Seven', category: 'Mystery', genres: 'Crime, Drama, Mystery', rating: 4.3, image: 'https://i.ibb.co/kGWyRmJ/seven.jpg' },
-    { title: 'Shutter Island', category: 'Thriller', genres: 'Mystery, Thriller', rating: 4.7, image: 'https://i.ibb.co/2gZr7BM/shutter.jpg' },
-    { title: 'Basic Instinct', category: 'Thriller', genres: 'Drama, Mystery', rating: 4.3, image: 'https://i.ibb.co/LNx2C4P/basic.jpg' }
-  ];
-
+export class VideoComponent implements OnInit, OnDestroy {
+  keepWatching: Video[] = [];
+  popular: Video[] = [];
   categories: MenuItem[] = [
     { label: 'Popular' },
     { label: 'New Releases' },
     { label: 'Recently Added' },
     { label: 'For you' }
   ];
-
   activeCategory: MenuItem = this.categories[0];
+
+  private routeSub!: Subscription;
+  ref: DynamicDialogRef | undefined;
+
+  constructor(
+    private videoService: VideoService,
+    private dialogService: DialogService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    this.keepWatching = this.videoService.getKeepWatching();
+    this.popular = this.videoService.getPopular();
+
+    // ✅ Check direct URL entry
+    const initialVideoId = this.route.snapshot.queryParams['videoId'];
+    if (initialVideoId) {
+      const video = this.videoService.getVideoById(+initialVideoId);
+      if (video) this.openVideo(video, false);
+    }
+
+    // ✅ Subscribe for query param changes
+    this.routeSub = this.route.queryParams.subscribe(params => {
+      const videoId = params['videoId'];
+      if (videoId) {
+        const video = this.videoService.getVideoById(+videoId);
+        if (video) this.openVideo(video, false);
+      } else if (!videoId && this.ref) {
+        this.ref.close();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.routeSub) this.routeSub.unsubscribe();
+    if (this.ref) this.ref.close();
+  }
+
+  openVideo(video: Video, updateUrl: boolean = true) {
+    if (updateUrl) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { videoId: video.id },
+        queryParamsHandling: 'merge'
+      });
+    }
+
+    this.ref = this.dialogService.open(VideoDialogComponent, {
+      data: video,
+      header: video.title,
+      style: { width: '70vw', maxWidth: '800px' },
+      contentStyle: { height: 'auto' },
+      modal: true,
+      dismissableMask: true,
+      baseZIndex: 10000
+    });
+
+    this.ref.onClose.subscribe(() => {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { videoId: null },
+        queryParamsHandling: 'merge'
+      });
+    });
+  }
 }

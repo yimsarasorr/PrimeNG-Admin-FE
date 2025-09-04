@@ -7,6 +7,7 @@ import { InboxListComponent } from './inbox/inboxlist/inboxlist.component'; // I
 import { CustomerComponent } from './customer/customer.component';
 import { CardComponent } from './card/card.component';
 import { VideoComponent } from './video/video.component';
+import { StarComponent } from './inbox/star/star.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -17,7 +18,8 @@ export const routes: Routes = [
     component: InboxComponent,
     children: [
       { path: '', component: InboxListComponent },      // <-- default child route
-      { path: 'list', component: InboxListComponent }
+      { path: 'list', component: InboxListComponent },
+      { path: 'star', component: StarComponent }
     ]
   },
   { path: 'customer', component: CustomerComponent },
