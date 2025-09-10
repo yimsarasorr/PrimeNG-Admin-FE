@@ -22,7 +22,11 @@
   <h3 class="section-title">Keep watching</h3>
   <p-carousel [value]="keepWatching" [numVisible]="4" [numScroll]="2" circular>
     <ng-template pTemplate="item" let-video>
-      <p-card [header]="video.title" [subheader]="video.genres" styleClass="video-card" (click)="openVideo(video)">
+      <p-card 
+        [header]="video.title" 
+        [subheader]="video.genres" 
+        styleClass="video-card" 
+        (click)="goToVideo(video)">
         <img [src]="video.image" alt="{{ video.title }}" class="video-img" />
         <div class="video-rating">⭐ {{ video.rating }}</div>
       </p-card>
@@ -37,7 +41,11 @@
 
   <div class="video-grid mt-4">
     <div *ngFor="let video of popular" class="video-item">
-      <p-card [header]="video.title" [subheader]="video.genres" styleClass="video-card" (click)="openVideo(video)">
+      <p-card 
+        [header]="video.title" 
+        [subheader]="video.genres" 
+        styleClass="video-card" 
+        (click)="goToVideo(video)">
         <img [src]="video.image" alt="{{ video.title }}" class="video-img" />
         <div class="video-rating">⭐ {{ video.rating }}</div>
       </p-card>
