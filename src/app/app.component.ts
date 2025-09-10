@@ -33,12 +33,12 @@ import { VideoService } from './service/video.service';
 export class AppComponent implements OnInit, OnDestroy {
   title = 'PrimeNG Admin';
   activeRoute: string = '';
-
   topMenu: any[] = [];
   bottomMenu: any[] = [];
 
   private routeSub!: Subscription;
-  private ref?: DynamicDialogRef;
+  private refs: { [type: string]: DynamicDialogRef } = {}; 
+  private basePath: string | null = null;
 
   constructor(
     public router: Router,
@@ -47,7 +47,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private chatService: ChatService,
     private videoService: VideoService
   ) {
-    // track route change
     this.router.events.subscribe(() => {
       this.activeRoute = this.router.url;
     });
@@ -68,30 +67,28 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: 'Help', icon: 'pi pi-question-circle', route: '/help' }
     ];
 
-    // subscribe to query params (global modal handler)
-    this.routeSub = this.route.queryParams.subscribe(params => {
-      const chatId = params['chatId'];
-      const videoId = params['videoId'];
-
-      // Close existing modal if any
-      if (this.ref) {
-        this.ref.close();
-        this.ref = undefined;
+    this.routeSub = this.route.queryParamMap.subscribe(paramMap => {
+      if (!this.basePath && paramMap.keys.length > 0) {
+        this.basePath = this.router.url.split('?')[0];
       }
 
-      if (chatId) {
-        const customer = this.chatService.getUsers().find(c => c.id === +chatId);
-        if (customer) this.openChatModal(customer);
-      } else if (videoId) {
-        const video = this.videoService.getVideoById(+videoId);
-        if (video) this.openVideoModal(video);
+      // Open only first chatId
+      const chatIds = paramMap.getAll('chatId').map(x => +x);
+      if (chatIds.length > 0 && !this.refs['chat']) {
+        this.openChatModal(chatIds[0]);
+      }
+
+      // Open only first videoId
+      const videoIds = paramMap.getAll('videoId').map(x => +x);
+      if (videoIds.length > 0 && !this.refs['video']) {
+        this.openVideoModal(videoIds[0]);
       }
     });
   }
 
   ngOnDestroy() {
     if (this.routeSub) this.routeSub.unsubscribe();
-    if (this.ref) this.ref.close();
+    this.closeAllModals();
   }
 
   isActive(path: string): boolean {
@@ -102,43 +99,66 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.navigate([path]);
   }
 
-  private openChatModal(customer: any) {
-    this.ref = this.dialogService.open(ChatDialogComponent, {
+  private openChatModal(id: number) {
+    const customer = this.chatService.getUsers().find(c => c.id === id);
+    if (!customer) return;
+
+    const ref = this.dialogService.open(ChatDialogComponent, {
       data: { userId: customer.id, name: customer.name, avatar: customer.avatar },
       header: `${customer.name} - Chat`,
-      style: { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' }, // Full screen
-      contentStyle: { height: '100%', padding: '0' }, // Full height content
+      style: { width: '60vw', height: '70vh' },
       modal: true,
       dismissableMask: true,
       baseZIndex: 10000
     });
 
-    this.ref.onClose.subscribe(() => {
-      this.clearQueryParam('chatId');
+    this.refs['chat'] = ref;
+
+    // Remove query param and ref on close
+    ref.onClose.subscribe(() => {
+      this.removeQueryParam('chatId');
+      delete this.refs['chat'];
+      this.checkReturnBasePath();
     });
   }
 
-  private openVideoModal(video: any) {
-    this.ref = this.dialogService.open(VideoDialogComponent, {
+  private openVideoModal(id: number) {
+    const video = this.videoService.getVideoById(id);
+    if (!video) return;
+
+    const ref = this.dialogService.open(VideoDialogComponent, {
       data: video,
       header: video.title,
-      style: { width: '70vw', maxWidth: '800px' },
-      contentStyle: { height: 'auto' },
+      style: { width: '70vw', maxWidth: '800px', height: '60vh' },
       modal: true,
       dismissableMask: true,
-      baseZIndex: 10000
+      baseZIndex: 11000
     });
 
-    this.ref.onClose.subscribe(() => {
-      this.clearQueryParam('videoId');
-      this.ref = undefined;
+    this.refs['video'] = ref;
+
+    ref.onClose.subscribe(() => {
+      this.removeQueryParam('videoId');
+      delete this.refs['video'];
+      this.checkReturnBasePath();
     });
   }
 
-  private clearQueryParam(param: string) {
-    this.router.navigate([], {
-      queryParams: { [param]: null },
-      queryParamsHandling: 'merge'
-    });
+  private removeQueryParam(param: string) {
+    const currentParams = { ...this.route.snapshot.queryParams };
+    delete currentParams[param];
+    this.router.navigate([], { queryParams: currentParams });
+  }
+
+  private closeAllModals() {
+    Object.values(this.refs).forEach(r => r.close());
+    this.refs = {};
+  }
+
+  private checkReturnBasePath() {
+    if (Object.keys(this.refs).length === 0 && this.basePath) {
+      this.router.navigate([this.basePath]);
+      this.basePath = null;
+    }
   }
 }

@@ -4,6 +4,7 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { Video } from '../../service/video.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-video-dialog',
@@ -15,19 +16,43 @@ import { Video } from '../../service/video.service';
       <p>{{ video.description }}</p>
       <p><strong>Category:</strong> {{ video.category }}</p>
       <p><strong>Rating:</strong> ⭐ {{ video.rating }}</p>
-      <button pButton label="Close" (click)="ref.close()" class="mt-3"></button>
+
+      <div class="flex gap-2 mt-3">
+
+        <!-- Navigate to chat by id -->
+        <button pButton label="Open Chat" class="p-button-success" (click)="openChatById(video.id)"></button>
+
+        <button pButton label="Close" (click)="ref.close()" class="p-button-secondary"></button>
+      </div>
     </p-card>
   `
 })
 export class VideoDialogComponent implements OnInit {
   video!: Video;
 
-  constructor(public ref: DynamicDialogRef, private config: DynamicDialogConfig) {}
+  constructor(
+    public ref: DynamicDialogRef,
+    private config: DynamicDialogConfig,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    // Receive video data from DynamicDialogConfig
     if (this.config.data) {
       this.video = this.config.data as Video;
     }
+  }
+
+  openVideoById(id: number) {
+    this.router.navigate([], {
+      queryParams: { videoId: id },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  openChatById(id: number) {
+    this.router.navigate([], {
+      queryParams: { chatId: id },
+      queryParamsHandling: 'merge'
+    });
   }
 }
