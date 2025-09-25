@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChatService, ChatMessage } from '../../service/chat.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-chat-dialog',
@@ -23,7 +24,8 @@ export class ChatDialogComponent {
   constructor(
     public ref: DynamicDialogRef,
     public config: DynamicDialogConfig,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private router: Router
   ) {
     this.userId = config.data.userId;
     this.name = config.data.name;
@@ -50,5 +52,27 @@ export class ChatDialogComponent {
 
   closeDialog() {
     this.ref.close();
+  }
+
+  openAnotherChat(id: number) {
+    this.router.navigate([], {
+      queryParams: { chatId: id },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  openVideoById(id: number) {
+    this.router.navigate([], {
+      queryParams: { videoId: id },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  // ✅ now opens via query param so AppComponent handles the modal
+  openUserInfo() {
+    this.router.navigate([], {
+      queryParams: { ...this.router.parseUrl(this.router.url).queryParams, userId: this.userId },
+      queryParamsHandling: 'merge'
+    });
   }
 }

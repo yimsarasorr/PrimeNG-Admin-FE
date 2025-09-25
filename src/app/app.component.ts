@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
-// PrimeNG modules
+// PrimeNG
 import { AvatarModule } from 'primeng/avatar';
 import { DividerModule } from 'primeng/divider';
+import { DynamicDialogModule } from 'primeng/dynamicdialog';
+
+// Services
+import { ModalService } from './service/modal.service';
 
 @Component({
   selector: 'app-root',
@@ -13,20 +17,23 @@ import { DividerModule } from 'primeng/divider';
     RouterOutlet,
     CommonModule,
     AvatarModule,
-    DividerModule
+    DividerModule,
+    DynamicDialogModule
   ],
+  // ⚠️ removed providers: [DialogService] — not needed
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'PrimeNG Admin';
   activeRoute: string = '';
-
   topMenu: any[] = [];
   bottomMenu: any[] = [];
 
-  constructor(public router: Router) {
-    // track route change
+  constructor(
+    public router: Router,
+    private modalService: ModalService
+  ) {
     this.router.events.subscribe(() => {
       this.activeRoute = this.router.url;
     });
@@ -46,6 +53,13 @@ export class AppComponent implements OnInit {
       { label: 'Settings', icon: 'pi pi-cog', route: '/settings' },
       { label: 'Help', icon: 'pi pi-question-circle', route: '/help' }
     ];
+
+    // Init modal detection
+    this.modalService.initListener();
+  }
+
+  ngOnDestroy() {
+    this.modalService.ngOnDestroy();
   }
 
   isActive(path: string): boolean {
