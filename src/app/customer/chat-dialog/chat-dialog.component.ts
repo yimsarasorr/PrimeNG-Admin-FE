@@ -67,4 +67,12 @@ export class ChatDialogComponent {
       queryParamsHandling: 'merge'
     });
   }
+
+  // ✅ now opens via query param so AppComponent handles the modal
+  openUserInfo() {
+    this.router.navigate([], {
+      queryParams: { ...this.router.parseUrl(this.router.url).queryParams, userId: this.userId },
+      queryParamsHandling: 'merge'
+    });
+  }
 }

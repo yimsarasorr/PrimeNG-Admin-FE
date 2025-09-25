@@ -115,3 +115,7 @@
   height: 100%;
 }
   /* Chart */
+  :host ::ng-deep .p-chart {
+  width: 100% !important;
+  height: 400px !important; /* ✅ ความสูง fix */
+}

@@ -1,100 +1,3 @@
-<!-- <div class="min-h-screen flex font-sans bg-white">
-  <div class="main-content">
-    <div class="header">
-        <div class="flex-container">
-            <span class="p-input-icon-left search-box">
-            <i class="pi pi-search text-gray-400"></i>
-            <input pInputText type="text" placeholder="Search visitor..." />
-            </span>
-        </div>
-    </div>
-
-    <h1 class="page-title">Welcome to Visitor Management</h1>
-
-    <p-splitter layout="vertical" class="main-splitter">
-      <ng-template pTemplate>
-        <p-panel header="Visitor Analytics" [toggleable]="false" class="panel-full">
-          <div class="chart-actions">
-            <button
-              pButton
-              label="Weekly"
-              (click)="setChartRange('week')"
-              [class]="chartRange === 'week' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
-            ></button>
-            <button
-              pButton
-              label="Monthly"
-              (click)="setChartRange('month')"
-              [class]="chartRange === 'month' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
-            ></button>
-            <button
-              pButton
-              label="Yearly"
-              (click)="setChartRange('year')"
-              [class]="chartRange === 'year' ? 'p-button-info' : 'p-button-outlined p-button-secondary'"
-            ></button>
-          </div>
-          <div class="chart-container">
-            <p-chart type="bar" [data]="chartData" [options]="chartOptions" class="h-[100rem]"></p-chart>
-          </div>
-        </p-panel>
-      </ng-template>
-
-      <ng-template pTemplate>
-        <p-splitter layout="horizontal" class="bottom-splitter">
-          <ng-template pTemplate>
-            <p-panel header="Visitor Logs" [toggleable]="false" class="panel-full">
-              <p-table [value]="visitorLogs">
-                <ng-template pTemplate="header">
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Purpose</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Time</th>
-                  </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-visitor>
-                  <tr>
-                    <td>{{ visitor.id }}</td>
-                    <td>{{ visitor.name }}</td>
-                    <td>{{ visitor.purpose }}</td>
-                    <td>{{ visitor.date }}</td>
-                    <td>
-                      <span
-                        [ngClass]="{
-                          'text-green-600 font-semibold': visitor.status === 'Checked In',
-                          'text-red-500 font-semibold': visitor.status === 'Checked Out'
-                        }"
-                        >{{ visitor.status }}</span
-                      >
-                    </td>
-                    <td>{{ visitor.time }}</td>
-                  </tr>
-                </ng-template>
-              </p-table>
-            </p-panel>
-          </ng-template>
-
-          <ng-template pTemplate>
-            <p-panel header="Visitor Statistics" [toggleable]="false" class="panel-full">
-              <div class="stats-container">
-                <p-card *ngFor="let stat of visitorStats" class="stat-card">
-                  <div class="stat-item">
-                    <span class="stat-name">{{ stat.name }}</span>
-                    <span class="stat-value">{{ stat.value }}</span>
-                  </div>
-                </p-card>
-              </div>
-            </p-panel>
-          </ng-template>
-        </p-splitter>
-      </ng-template>
-    </p-splitter>
-  </div>
-</div> -->
-
 <div class="flex-1 h-full overflow-y-auto pb-0.5 w-full">
   <!-- Header -->
   <div class="flex flex-wrap gap-4 items-start justify-between p-1">
@@ -132,69 +35,63 @@
 
   <!-- Charts & Tables -->
   <div class="grid grid-cols-2 gap-6 mt-2">
-    <!-- Chart: full width at top -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 mb-4 w-full">
+    <!-- Chart -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 mb-4 w-full col-span-2">
       <div class="flex items-center justify-between mb-6">
         <div class="text-xl font-bold text-gray-800">Visitor Analytics</div>
-
-
       </div>
       <div class="flex-1 flex items-center justify-center w-full" style="min-height:400px;">
         <p-chart 
           type="bar" 
           [data]="chartData" 
           [options]="chartOptions" 
-          style="width: 100%; "
-          >
+          style="width: 100%; height: 400px;">
         </p-chart>
       </div>
     </div>
 
-    <!-- Transactions and Buildings: side-by-side below chart -->
-    <div class="flex gap-6 w-full">
-      <!-- Visitor Logs Table: left side -->
-      <div class="flex-1 border border-surface rounded-2xl py-3 px-4 flex flex-col">
-        <div class="flex items-center gap-6 mb-4">
-          <div class="flex-1 text-color font-semibold">Visitor Logs</div>
-          <p-button icon="pi pi-ellipsis-h" severity="secondary" text></p-button>
-        </div>
-        <p-table [value]="visitorLogs" [paginator]="true" [rows]="5">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Time</th>
-              <th>Purpose</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-row>
-            <tr>
-              <td>{{row.id}}</td>
-              <td>{{row.name}}</td>
-              <td>{{row.type}}</td>
-              <td>{{row.date}}</td>
-              <td>
-                <p-tag [value]="row.status" [severity]="row.status === 'Checked In' ? 'success' : 'danger'"></p-tag>
-              </td>
-              <td>{{row.time}}</td>
-              <td>{{row.purpose}}</td>
-            </tr>
-          </ng-template>
-        </p-table>
+    <!-- Visitor Logs -->
+    <div class="flex-1 border border-surface rounded-2xl py-3 px-4 flex flex-col">
+      <div class="flex items-center gap-6 mb-4">
+        <div class="flex-1 text-color font-semibold">Visitor Logs</div>
+        <p-button icon="pi pi-ellipsis-h" severity="secondary" text></p-button>
       </div>
+      <p-table [value]="visitorLogs" [paginator]="true" [rows]="5">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Purpose</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{row.id}}</td>
+            <td>{{row.name}}</td>
+            <td>{{row.type}}</td>
+            <td>{{row.date}}</td>
+            <td>
+              <p-tag [value]="row.status" [severity]="row.status === 'Checked In' ? 'success' : 'danger'"></p-tag>
+            </td>
+            <td>{{row.time}}</td>
+            <td>{{row.purpose}}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
 
-      <!-- Buildings: right side -->
-      <div class="flex-1 border border-surface rounded-2xl py-3 px-4 flex flex-col">
-        <div class="flex items-center mb-6">
-          <div class="flex-1 text-color font-semibold">Buildings</div>
-          <p-button icon="pi pi-ellipsis-h" severity="secondary" text></p-button>
-        </div>
-        <p-meterGroup [value]="visitorTypes" labelPosition="end"></p-meterGroup>
-        <p-button label="Show All" outlined styleClass="w-full"></p-button>
+    <!-- Buildings -->
+    <div class="flex-1 border border-surface rounded-2xl py-3 px-4 flex flex-col">
+      <div class="flex items-center mb-6">
+        <div class="flex-1 text-color font-semibold">Buildings</div>
+        <p-button icon="pi pi-ellipsis-h" severity="secondary" text></p-button>
       </div>
+      <p-meterGroup [value]="visitorTypes" labelPosition="end"></p-meterGroup>
+      <p-button label="Show All" outlined styleClass="w-full"></p-button>
     </div>
   </div>
 </div>

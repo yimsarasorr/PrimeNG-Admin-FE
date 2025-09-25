@@ -19,8 +19,7 @@ import { Router } from '@angular/router';
 
       <div class="flex gap-2 mt-3">
 
-        <!-- Navigate to chat by id -->
-        <button pButton label="Open Chat" class="p-button-success" (click)="openChatById(video.id)"></button>
+        
 
         <button pButton label="Close" (click)="ref.close()" class="p-button-secondary"></button>
       </div>

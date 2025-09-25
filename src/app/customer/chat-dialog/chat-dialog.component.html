@@ -1,6 +1,6 @@
 <div class="chat-main">
   <!-- Header -->
-  <div class="chat-header">
+  <div class="chat-header cursor-pointer" (click)="openUserInfo()">
     <p-avatar [image]="avatar" shape="circle" size="large" styleClass="mr-2"></p-avatar>
     <div>
       <h3 class="chat-title">{{ name }}</h3>
@@ -10,7 +10,7 @@
       pButton 
       icon="pi pi-times" 
       class="ml-auto p-button-rounded p-button-text" 
-      (click)="closeDialog()">
+      (click)="closeDialog(); $event.stopPropagation()">
     </button>
   </div>
 

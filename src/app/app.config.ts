@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from "@angular/core";
+import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from "@angular/core";
 import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
 import { provideRouter } from "@angular/router";
 
@@ -6,6 +6,9 @@ import { routes } from "./app.routes";
 
 import { providePrimeNG } from "primeng/config";
 import Aura from "@primeuix/themes/aura";
+
+// PrimeNG dialog
+import { DynamicDialogModule, DialogService } from "primeng/dynamicdialog";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,5 +20,7 @@ export const appConfig: ApplicationConfig = {
         preset: Aura
       },
     }),
+    importProvidersFrom(DynamicDialogModule), // ✅ required for dialogs
+    DialogService,                            // ✅ global provider
   ],
-}
+};
