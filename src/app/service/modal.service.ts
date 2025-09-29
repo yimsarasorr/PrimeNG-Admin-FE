@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, Type } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -13,14 +13,19 @@ import { ChatService } from './chat.service';
 import { VideoService } from './video.service';
 import { UserInfoService } from './user-info.service';
 
+interface ModalEntry {
+  type: string;
+  id: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ModalService implements OnDestroy {
-  private refs: { [type: string]: DynamicDialogRef } = {};
+  private refs: { [key: string]: DynamicDialogRef } = {};
   private routeSub!: Subscription;
   private basePath: string | null = null;
-  private currentZIndex = 10000; // starting z-index
+  private currentZIndex = 10000;
 
   constructor(
     private route: ActivatedRoute,
@@ -31,29 +36,40 @@ export class ModalService implements OnDestroy {
     private userInfoService: UserInfoService
   ) {}
 
+  /** Call this in AppComponent ngOnInit */
   initListener() {
+    // Subscribe to query param changes
     this.routeSub = this.route.queryParamMap.subscribe(paramMap => {
       if (!this.basePath && paramMap.keys.length > 0) {
         this.basePath = this.router.url.split('?')[0];
       }
 
-      // Chat modal
-      const chatIds = paramMap.getAll('chatId').map(x => +x);
-      if (chatIds.length > 0 && !this.refs['chat']) {
-        this.openChatModal(chatIds[0]);
-      }
+      // Get all modal params
+      const modals = paramMap.getAll('modal'); // e.g. ["chatmodal,1", "userinfo,2"]
+      const parsed: ModalEntry[] = modals
+        .map(m => {
+          const [type, idStr] = m.split(',');
+          const id = parseInt(idStr, 10);
+          if (!type || isNaN(id)) return null;
+          return { type, id };
+        })
+        .filter((x): x is ModalEntry => x !== null);
 
-      // Video modal
-      const videoIds = paramMap.getAll('videoId').map(x => +x);
-      if (videoIds.length > 0 && !this.refs['video']) {
-        this.openVideoModal(videoIds[0]);
-      }
+      // Close removed modals
+      Object.keys(this.refs).forEach(key => {
+        if (!parsed.some(m => `${m.type}-${m.id}` === key)) {
+          this.refs[key]?.close();
+          delete this.refs[key];
+        }
+      });
 
-      // User Info modal
-      const userIds = paramMap.getAll('userId').map(x => +x);
-      if (userIds.length > 0 && !this.refs['user']) {
-        this.openUserInfoModal(userIds[0]);
-      }
+      // Open new modals in real time
+      parsed.forEach(m => {
+        const key = `${m.type}-${m.id}`;
+        if (!this.refs[key]) {
+          this.openModal(m.type, m.id);
+        }
+      });
     });
   }
 
@@ -62,123 +78,82 @@ export class ModalService implements OnDestroy {
     this.closeAllModals();
   }
 
-  // ----------------------------
-  // Open modals
-  // ----------------------------
+  /** Add a modal via query param and open immediately */
+  addModal(type: string, id: number) {
+    const params = { ...this.route.snapshot.queryParams };
+    const existing: string[] = this.route.snapshot.queryParamMap.getAll('modal');
+    const newModal = `${type},${id}`;
+    if (!existing.includes(newModal)) existing.push(newModal);
 
-  private openChatModal(id: number) {
-    const customer = this.chatService.getUsers().find(c => c.id === id);
-    if (!customer) return;
-
-    const zIndex = ++this.currentZIndex;
-
-    this.router.navigate([], {
-      queryParams: { ...this.route.snapshot.queryParams, chatId: id },
-      queryParamsHandling: 'merge'
-    });
-
-    const ref = this.dialogService.open(ChatDialogComponent, {
-      data: { userId: customer.id, name: customer.name, avatar: customer.avatar },
-      header: `${customer.name} - Chat`,
-      style: { width: '60vw', height: '70vh' },
-      modal: true,
-      dismissableMask: true,
-      baseZIndex: zIndex
-    });
-
-    this.refs['chat'] = ref;
-
-    ref.onClose.subscribe(() => {
-      this.removeQueryParam('chatId');
-      delete this.refs['chat'];
-
-      // Close user modal if chat closes
-      if (this.refs['user']) {
-        this.refs['user'].close();
-        delete this.refs['user'];
-        this.removeQueryParam('userId');
-      }
-
-      this.checkReturnBasePath();
-    });
+    // Navigate to update URL
+    this.router.navigate([], { queryParams: { ...params, modal: existing }, queryParamsHandling: 'merge' });
   }
 
-  private openVideoModal(id: number) {
-    const video = this.videoService.getVideoById(id);
-    if (!video) return;
-
-    const zIndex = ++this.currentZIndex;
-
-    this.router.navigate([], {
-      queryParams: { ...this.route.snapshot.queryParams, videoId: id },
-      queryParamsHandling: 'merge'
-    });
-
-    const ref = this.dialogService.open(VideoDialogComponent, {
-      data: video,
-      header: video.title,
-      style: { width: '70vw', maxWidth: '800px', height: '60vh' },
-      modal: true,
-      dismissableMask: true,
-      baseZIndex: zIndex
-    });
-
-    this.refs['video'] = ref;
-
-    ref.onClose.subscribe(() => {
-      this.removeQueryParam('videoId');
-      delete this.refs['video'];
-      this.checkReturnBasePath();
-    });
+  /** Close a modal */
+  closeModal(type: string, id: number) {
+    const params = { ...this.route.snapshot.queryParams };
+    const existing: string[] = this.route.snapshot.queryParamMap.getAll('modal');
+    const filtered = existing.filter(m => m !== `${type},${id}`);
+    this.router.navigate([], { queryParams: { ...params, modal: filtered.length ? filtered : null }, queryParamsHandling: 'merge' });
   }
 
-  private openUserInfoModal(id: number) {
-    const customer = this.userInfoService.getCustomers().find(c => c.id === id);
-    if (!customer) return;
-
+  /** Open modal dynamically */
+  private openModal(type: string, id: number) {
+    let ref: DynamicDialogRef | null = null;
     const zIndex = ++this.currentZIndex;
+    let component: any;
+    let data: any = null;
 
-    this.router.navigate([], {
-      queryParams: { ...this.route.snapshot.queryParams, userId: id },
-      queryParamsHandling: 'merge'
-    });
+    switch (type.toLowerCase()) {
+      case 'chatmodal':
+        component = ChatDialogComponent;
+        const customer = this.chatService.getUsers().find(c => c.id === id);
+        if (!customer) return;
+        data = { userId: customer.id, name: customer.name, avatar: customer.avatar };
+        break;
 
-    const ref = this.dialogService.open(UserInfoModalComponent, {
-      data: { customer },
-      header: `${customer.name} - Info`,
-      style: { width: '80vw', maxWidth: '1200px' },
+      case 'videomodal':
+        component = VideoDialogComponent;
+        const video = this.videoService.getVideoById(id);
+        if (!video) return;
+        data = video;
+        break;
+
+      case 'infomodal':
+      case 'userinfo':
+        component = UserInfoModalComponent;
+        const user = this.userInfoService.getCustomers().find(c => c.id === id);
+        if (!user) return;
+        data = { customer: user };
+        break;
+
+      default:
+        return;
+    }
+
+    ref = this.dialogService.open(component, {
+      data,
+      header: data?.name || data?.title || '',
+      style: { width: '60vw', maxWidth: '1200px', height: '70vh' },
       modal: true,
       dismissableMask: true,
       baseZIndex: zIndex,
-      closable: false
+      closable: true
     });
 
-    this.refs['user'] = ref;
+    this.refs[`${type}-${id}`] = ref;
 
     ref.onClose.subscribe(() => {
-      this.removeQueryParam('userId');
-      delete this.refs['user'];
-
-      if (!this.refs['chat'] && !this.refs['video']) {
-        this.checkReturnBasePath();
-      }
+      delete this.refs[`${type}-${id}`];
+      this.closeModal(type, id);
+      if (Object.keys(this.refs).length === 0) this.checkReturnBasePath();
     });
-  }
-
-  // ----------------------------
-  // Helpers
-  // ----------------------------
-
-  private removeQueryParam(param: string) {
-    const currentParams = { ...this.route.snapshot.queryParams };
-    delete currentParams[param];
-    this.router.navigate([], { queryParams: currentParams });
   }
 
   private closeAllModals() {
     Object.values(this.refs).forEach(r => r.close());
     this.refs = {};
-    this.currentZIndex = 10000; // reset z-index
+    this.currentZIndex = 10000;
   }
 
   private checkReturnBasePath() {

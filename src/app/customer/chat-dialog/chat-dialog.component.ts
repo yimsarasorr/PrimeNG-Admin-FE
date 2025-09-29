@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChatService, ChatMessage } from '../../service/chat.service';
-import { Router } from '@angular/router';
+import { ModalService } from '../../service/modal.service';
 
 @Component({
   selector: 'app-chat-dialog',
@@ -25,54 +25,46 @@ export class ChatDialogComponent {
     public ref: DynamicDialogRef,
     public config: DynamicDialogConfig,
     private chatService: ChatService,
-    private router: Router
+    private modalService: ModalService
   ) {
     this.userId = config.data.userId;
     this.name = config.data.name;
     this.avatar = config.data.avatar;
   }
 
+  // ✅ Get all messages for this user
   get messages(): ChatMessage[] {
     return this.chatService.getMessagesForUser(this.userId);
   }
 
+  // ✅ Send a new message
   sendMessage() {
-    if (this.newMessage.trim()) {
-      this.chatService.addMessage({
-        userId: this.userId,
-        sender: 'Me',
-        avatar: 'https://i.pravatar.cc/40?img=4',
-        content: this.newMessage,
-        time: new Date().toLocaleTimeString(),
-        own: true
-      });
-      this.newMessage = '';
-    }
+    if (!this.newMessage.trim()) return;
+
+    this.chatService.addMessage({
+      userId: this.userId,
+      sender: 'Me',
+      avatar: 'https://i.pravatar.cc/40?img=4',
+      content: this.newMessage,
+      time: new Date().toLocaleTimeString(),
+      own: true
+    });
+
+    this.newMessage = '';
   }
 
+  // ✅ Close current chat modal
   closeDialog() {
-    this.ref.close();
+    this.modalService.closeModal('chatmodal', this.userId);
   }
 
+  // ✅ Open another chat modal (stacked)
   openAnotherChat(id: number) {
-    this.router.navigate([], {
-      queryParams: { chatId: id },
-      queryParamsHandling: 'merge'
-    });
+    this.modalService.addModal('chatmodal', id);
   }
 
-  openVideoById(id: number) {
-    this.router.navigate([], {
-      queryParams: { videoId: id },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  // ✅ now opens via query param so AppComponent handles the modal
+  // ✅ Open user info modal from chat
   openUserInfo() {
-    this.router.navigate([], {
-      queryParams: { ...this.router.parseUrl(this.router.url).queryParams, userId: this.userId },
-      queryParamsHandling: 'merge'
-    });
+    this.modalService.addModal('userinfo', this.userId);
   }
 }
