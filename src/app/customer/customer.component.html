@@ -56,10 +56,7 @@
         <td>{{ customer.email }}</td>
         <td>{{ customer.leadSource }}</td>
         <td>
-          <p-tag 
-            value="{{ customer.status }}" 
-            severity="{{ getSeverity(customer.status) }}">
-          </p-tag>
+          <p-tag value="{{ customer.status }}" severity="{{ getSeverity(customer.status) }}"></p-tag>
         </td>
         <td>
           <p-tag [value]="customer.online ? 'Online' : 'Offline'" [severity]="customer.online ? 'success' : 'secondary'"></p-tag>
@@ -70,7 +67,7 @@
             icon="pi pi-comments" 
             class="p-button-text" 
             pTooltip="Open Chat" 
-            (click)="navigateToChat(customer)">
+            (click)="openChat(customer)">
           </button>
         </td>
       </tr>

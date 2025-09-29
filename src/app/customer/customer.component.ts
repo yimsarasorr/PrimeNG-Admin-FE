@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
@@ -13,7 +13,7 @@ import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { CardModule } from 'primeng/card';
 import { ChipModule } from 'primeng/chip';
 
-import { ChatService } from '../service/chat.service';
+import { ModalService } from '../service/modal.service';
 
 @Component({
   selector: 'app-customer',
@@ -48,28 +48,10 @@ export class CustomerComponent implements OnInit, OnDestroy {
 
   private routeSub!: Subscription;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private chatService: ChatService
-  ) {}
+  constructor(private modalService: ModalService) {}
 
   ngOnInit() {
-    // Check if app.component wants to open a chat via query param
-    const initialChatId = this.route.snapshot.queryParams['chatId'];
-    if (initialChatId) {
-      const customer = this.allCustomers.find(c => c.id === +initialChatId);
-      if (customer) this.navigateToChat(customer);
-    }
-
-    // Subscribe to changes
-    this.routeSub = this.route.queryParams.subscribe(params => {
-      const chatId = params['chatId'];
-      if (chatId) {
-        const customer = this.allCustomers.find(c => c.id === +chatId);
-        if (customer) this.navigateToChat(customer);
-      }
-    });
+    // no need to handle chatId here anymore, ModalService handles modal opening
   }
 
   ngOnDestroy() {
@@ -84,12 +66,8 @@ export class CustomerComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Only update query param to trigger AppComponent modal
-  navigateToChat(customer: any) {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { chatId: customer.id },
-      queryParamsHandling: 'merge'
-    });
+  // 🔹 New method to open chat modal
+  openChat(customer: any) {
+    this.modalService.addModal('chatmodal', customer.id);
   }
 }
