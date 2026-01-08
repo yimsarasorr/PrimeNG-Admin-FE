@@ -4,14 +4,17 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
+// PrimeNG Modules
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { AvatarModule } from 'primeng/avatar';
-import { BadgeModule } from 'primeng/badge';
-import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { CardModule } from 'primeng/card';
-import { ChipModule } from 'primeng/chip';
+import { DropdownModule } from 'primeng/dropdown';
+import { CalendarModule } from 'primeng/calendar';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 import { ModalService } from '../service/modal.service';
 
@@ -26,48 +29,75 @@ import { ModalService } from '../service/modal.service';
     ButtonModule,
     TagModule,
     AvatarModule,
-    BadgeModule,
-    OverlayBadgeModule,
     CardModule,
-    ChipModule
+    DropdownModule,
+    CalendarModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule
   ],
   templateUrl: './customer.component.html',
   styleUrls: ['./customer.component.css']
 })
 export class CustomerComponent implements OnInit, OnDestroy {
-  allCustomers = [
-    { id: 1, name: 'Cody Fisher', avatar: 'https://i.pravatar.cc/40?img=1', title: 'Software Engineer', company: 'PrimeTek', email: 'cody@primetek.com', leadSource: 'LinkedIn', status: 'Active', online: true },
-    { id: 2, name: 'PrimeTek Team', avatar: 'https://i.pravatar.cc/40?img=2', title: 'Team', company: 'PrimeTek', email: 'team@primetek.com', leadSource: 'Website', status: 'Active', online: true },
-    { id: 3, name: 'Jerome Bell', avatar: 'https://i.pravatar.cc/40?img=3', title: 'Product Manager', company: 'PrimeTek', email: 'jerome@primetek.com', leadSource: 'Referral', status: 'Inactive', online: true },
-    { id: 4, name: 'Courtney Henry', avatar: 'https://i.pravatar.cc/40?img=4', title: 'Designer', company: 'PrimeTek', email: 'courtney@primetek.com', leadSource: 'Website', status: 'Active', online: false },
-    { id: 5, name: 'Theresa Webb', avatar: 'https://i.pravatar.cc/40?img=5', title: 'QA Engineer', company: 'PrimeTek', email: 'theresa@primetek.com', leadSource: 'LinkedIn', status: 'Active', online: true },
-    { id: 6, name: 'Wade Warren', avatar: 'https://i.pravatar.cc/40?img=6', title: 'DevOps Engineer', company: 'PrimeTek', email: 'wade@primetek.com', leadSource: 'Referral', status: 'Inactive', online: false },
-    { id: 7, name: 'Jenny Wilson', avatar: 'https://i.pravatar.cc/40?img=7', title: 'HR Manager', company: 'PrimeTek', email: 'jenny@primetek.com', leadSource: 'Website', status: 'Active', online: true },
-    { id: 8, name: 'Kristin Watson', avatar: 'https://i.pravatar.cc/40?img=8', title: 'Marketing Specialist', company: 'PrimeTek', email: 'kristin@primetek.com', leadSource: 'LinkedIn', status: 'Inactive', online: false }
+  // Metrics for User Management
+  metrics = [
+    { title: 'บัญชีผู้ใช้งานทั้งหมด', value: '1,247', subtext: '+2 บัญชี', icon: 'pi pi-users', isTime: false },
+    { title: 'บัญชีผู้เยี่ยมชม', value: '892', subtext: '+1 บัญชี', icon: 'pi pi-user', isTime: false },
+    { title: 'บัญชีพนักงาน', value: '267', subtext: '', icon: 'pi pi-shopping-bag', isTime: false },
+    { title: 'บัญชีเจ้าหน้าที่', value: '88', subtext: '+1 บัญชีใหม่', icon: 'pi pi-briefcase', isTime: false }
   ];
 
-  private routeSub!: Subscription;
+  // Table Data mapping the screenshot rows
+  users = [
+    { name: 'สมชาย ใจดี', id: 'T25680818', registerDate: '18/08/2568', expiryDate: '-', type: 'ผู้ดูแลระบบขั้นสูง', status: 'ใช้งานอยู่', lastActive: 'ตอนนี้' },
+    { name: 'วันดี สุขใจ', id: 'A25680820', registerDate: '20/08/2568', expiryDate: '-', type: 'ผู้ดูแลระบบ', status: 'ใช้งานอยู่', lastActive: 'เมื่อ 20 นาทีที่แล้ว' },
+    { name: 'มกรา ปีใหม่', id: 'T25680923', registerDate: '23/09/2568', expiryDate: '22/12/2568', type: 'พนักงานภายนอก', status: 'ใช้งานอยู่', lastActive: 'เมื่อ 2 ชั่วโมงที่แล้ว' },
+    { name: 'สมร รักดี', id: 'A25681105', registerDate: '05/11/2568', expiryDate: '06/12/2568', type: 'ผู้เยี่ยมชม', status: 'ใช้งานอยู่', lastActive: 'เมื่อ 1 วันที่แล้ว' },
+    { name: 'ดูดี หล่อรวย', id: 'U25681016', registerDate: '16/10/2568', expiryDate: '15/10/2570', type: 'ผู้ขอใช้สิทธิ', status: 'ใช้งานอยู่', lastActive: 'เมื่อ 5 วันที่แล้ว' },
+    { name: 'แสน สาหัส', id: 'U25681013', registerDate: '13/10/2568', expiryDate: '-', type: 'พนักงานประจำ', status: 'ใช้งานอยู่', lastActive: 'เมื่อ 9 วันที่แล้ว' },
+    { name: 'มั่งมี ศรีสุข', id: 'S25680902', registerDate: '02/09/2568', expiryDate: '01/12/2568', type: 'รปภ. (กำหนดเอง)', status: 'ระงับ', lastActive: 'เมื่อ 45 วันที่แล้ว' }
+  ];
+
+  // Dropdown options
+  userTypes = [
+    { label: 'ประเภทผู้ใช้', value: null },
+    { label: 'พนักงาน', value: 'staff' },
+    { label: 'ผู้เยี่ยมชม', value: 'visitor' }
+  ];
+
+  statuses = [
+    { label: 'สถานะ', value: null },
+    { label: 'ใช้งานอยู่', value: 'active' },
+    { label: 'ระงับ', value: 'suspended' }
+  ];
+
+  sortOptions = [
+    { label: 'เรียงตาม', value: null },
+    { label: 'ชื่อ', value: 'name' }
+  ];
+
+  selectedType: any;
+  selectedDate: any;
+  selectedStatus: any;
+  selectedSort: any;
+  selectedUsers: any[] = [];
 
   constructor(private modalService: ModalService) {}
 
-  ngOnInit() {
-    // no need to handle chatId here anymore, ModalService handles modal opening
-  }
+  ngOnInit() {}
 
-  ngOnDestroy() {
-    if (this.routeSub) this.routeSub.unsubscribe();
-  }
+  ngOnDestroy() {}
 
-  getSeverity(status: string): string {
+  getSeverity(status: string) {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Inactive': return 'secondary';
-      default: return 'info';
+      case 'ใช้งานอยู่': return 'info';
+      case 'ระงับ': return 'warn';
+      default: return 'secondary';
     }
   }
 
-  // 🔹 New method to open chat modal
-  openChat(customer: any) {
-    this.modalService.addModal('chatmodal', customer.id);
+  openChat(user: any) {
+    this.modalService.addModal('chatmodal', user.id);
   }
 }

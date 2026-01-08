@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-// PrimeNG modules
-import { ButtonModule } from 'primeng/button';
-import { BadgeModule } from 'primeng/badge';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { CalendarModule } from 'primeng/calendar';
-import { ChartModule } from 'primeng/chart';
-import { TableModule } from 'primeng/table';
-import { AvatarModule } from 'primeng/avatar';
-import { TagModule } from 'primeng/tag';
-import { MeterGroupModule } from 'primeng/metergroup';
 import { FormsModule } from '@angular/forms';
+
+// PrimeNG Modules
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { DropdownModule } from 'primeng/dropdown';
+import { CalendarModule } from 'primeng/calendar';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CardModule } from 'primeng/card'; // <-- Added CardModule
+import { IconFieldModule } from 'primeng/iconfield'; 
+import { InputIconModule } from 'primeng/inputicon';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,109 +21,61 @@ import { FormsModule } from '@angular/forms';
     CommonModule,
     FormsModule,
     ButtonModule,
-    BadgeModule,
     InputTextModule,
-    SelectButtonModule,
+    DropdownModule,
     CalendarModule,
-    ChartModule,
     TableModule,
-    AvatarModule,
     TagModule,
-    MeterGroupModule
+    CheckboxModule,
+    CardModule,      // <-- Added to imports
+    IconFieldModule,
+    InputIconModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  selectedPeriod: string = 'Monthly';
-
-  chartData: any;
-  chartOptions: any;
-
-  visitorLogs = [
-    { id: 1, name: 'John Doe', type: 'Employee', date: '2025-08-28', status: 'Checked In', time: '08:45', purpose: 'Work' },
-    { id: 2, name: 'Jane Smith', type: 'Guest', date: '2025-08-28', status: 'Checked Out', time: '10:30', purpose: 'Meeting' },
-    { id: 3, name: 'Alice Johnson', type: 'Contractor', date: '2025-08-28', status: 'Checked In', time: '09:15', purpose: 'Maintenance' },
-    { id: 4, name: 'Bob Lee', type: 'Guest', date: '2025-08-28', status: 'Checked In', time: '11:00', purpose: 'Interview' }
+  
+  // Dropdown Options
+  zones = [
+    { label: 'โซน 1', value: 'zone1' },
+    { label: 'โซน 2', value: 'zone2' }
+  ];
+  
+  statuses = [
+    { label: 'สถานะ', value: null },
+    { label: 'ปกติ', value: 'normal' },
+    { label: 'ผิดปกติ', value: 'abnormal' }
   ];
 
-  visitorTypes = [
-    { label: 'Building A', value: 60, color: '#3b82f6' },
-    { label: 'Building B', value: 25, color: '#60a5fa' },
-    { label: 'Building C', value: 15, color: '#93c5fd' }
+  sortOptions = [
+    { label: 'เรียงตาม', value: null },
+    { label: 'ล่าสุด', value: 'latest' }
   ];
 
-  ngOnInit(): void {
-    this.initChart();
-    this.loadVisitorLogs();
-    this.loadVisitorTypes();
-  }
+  selectedZone: any = 'zone1';
+  selectedDate: Date | undefined;
+  selectedStatus: any;
+  selectedSort: any;
 
-  initChart() {
-    this.chartData = {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul',
-               'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [
-        {
-          type: 'bar',
-          label: 'Employees',
-          backgroundColor: '#3b82f6',
-          data: [120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230],
-          barPercentage: 1.0,          // ✅ เต็ม category
-          categoryPercentage: 0.4,     // ✅ ลดช่องว่าง
-          maxBarThickness: 40          // ✅ จำกัดความหนาแท่ง
-        },
-        {
-          type: 'bar',
-          label: 'Guests',
-          backgroundColor: '#60a5fa',
-          data: [80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190],
-          barPercentage: 1.0,
-          categoryPercentage: 0.4,
-          maxBarThickness: 40
-        },
-        {
-          type: 'bar',
-          label: 'Contractors',
-          backgroundColor: '#93c5fd',
-          data: [60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 100],
-          barPercentage: 1.0,
-          categoryPercentage: 0.4,
-          maxBarThickness: 40
-        }
-      ]
-    };
+  // Metrics Data
+  metrics = [
+    { title: 'อาคารทั้งหมด', value: '26', subtext: '', icon: 'pi pi-building', color: 'text-blue-600' },
+    { title: 'เช็คอินวันนี้', value: '57', subtext: '+5% จากเมื่อวาน', icon: 'pi pi-map-marker', color: 'text-blue-600' },
+    { title: 'เพิ่มการจองวันนี้', value: '15', subtext: '+5% จากเมื่อวาน', icon: 'pi pi-book', color: 'text-blue-600' },
+    { title: 'เวลาในขณะนี้', value: '11:32', subtext: 'GMT+7', icon: '', color: 'text-blue-600', isTime: true }
+  ];
 
-    this.chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: { color: '#1e293b', font: { size: 14, weight: 'bold' } }
-        },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#64748b', font: { size: 13 } },
-          grid: { color: '#f3f4f6' },
-          stacked: false
-        },
-        y: {
-          ticks: { color: '#64748b', font: { size: 12 } },
-          grid: { color: '#f3f4f6' },
-          beginAtZero: true
-        }
-      }
-    };
-  }
+  // Table Data
+  logs = [
+    { id: 1, date: '12 / 12 / 2568 11:32', user: 'abc', action: 'เช็คอิน', target: 'ตึก B', status: 'normal', details: '' },
+    { id: 2, date: '12 / 12 / 2568 11:21', user: 'def', action: 'อยู่ที่', target: 'อาคาร 12 ชั้น', status: 'warning', details: 'เกินเวลาที่กำหนด' },
+    { id: 3, date: '12 / 12 / 2568 11:04', user: 'hij', action: 'เพิ่มการจอง', target: 'ภาควิชาวิศวกรรมโยธา', status: 'info', details: '' },
+    { id: 4, date: '12 / 12 / 2568 11:32', user: 'abc', action: 'เช็คอิน', target: 'ตึก B', status: 'normal', details: '' },
+    { id: 7, date: '12 / 12 / 2568 11:32', user: 'abc', action: 'เช็คอิน', target: 'ตึก B', status: 'error', details: 'โดยไม่มีสิทธิ์' }
+  ];
 
-  loadVisitorLogs() {
-    this.visitorLogs = [...this.visitorLogs];
-  }
+  selectedLogs: any[] = [];
 
-  loadVisitorTypes() {
-    this.visitorTypes = [...this.visitorTypes];
-  }
+  ngOnInit(): void {}
 }

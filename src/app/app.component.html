@@ -1,46 +1,85 @@
-<div class="layout flex h-screen overflow-hidden">
-  <!-- Sidebar -->
-  <div class="h-full flex flex-column justify-between p-3 border-round surface-50 dark:surface-900 shadow-1 w-5rem">
+<ng-template #menuContent>
+  <div class="flex flex-column h-full justify-content-between">
     
-    <!-- Top Section -->
-    <div class="flex flex-column align-items-center gap-4">
-      <!-- Logo -->
-      <div class="w-3rem h-3rem border-round-lg flex align-items-center justify-content-center border-1 border-primary">
-        <i class="pi pi-prime text-primary text-2xl"></i>
+    <div class="flex flex-column gap-2">
+      
+      <div class="mb-2 px-3 flex align-items-center gap-2 font-bold text-xl transition-colors transition-duration-300"
+           [ngClass]="selectedSite === 'kmitl' ? 'text-orange-600' : 'text-yellow-600'">
+          <i class="pi pi-briefcase"></i>
+          <span>FastPass {{ selectedSite === 'kmitl' ? 'KMITL' : 'KMUTT' }} Admin</span>
       </div>
 
-      <!-- Menu -->
-      <div class="flex flex-column gap-2 mt-4 w-full">
-        <div *ngFor="let item of topMenu"
-             (click)="navigate(item.route)"
-             class="flex align-items-center justify-content-center p-2 border-round cursor-pointer transition-colors"
-             [ngClass]="{'bg-primary text-primary-contrast': isActive(item.route), 'text-600 hover:surface-200': !isActive(item.route)}">
-          <i [class]="item.icon"></i>
+      <div class="px-3 mb-3">
+        <p-selectButton 
+          [options]="siteOptions" 
+          [(ngModel)]="selectedSite" 
+          optionLabel="label" 
+          optionValue="value" 
+          [allowEmpty]="false"
+          styleClass="w-full text-sm">
+        </p-selectButton>
+      </div>
+
+      <div *ngFor="let item of topMenu"
+           class="p-ripple flex align-items-center p-3 border-round-md cursor-pointer text-700 transition-colors transition-duration-150 hover:surface-100"
+           [class.surface-100]="isActive(item.route)"
+           [class.text-primary]="isActive(item.route)"
+           [class.font-bold]="isActive(item.route)"
+           (click)="navigate(item.route)">
+        <i [class]="item.icon" class="text-xl mr-2"></i>
+        <span class="font-medium">{{ item.label }}</span>
+      </div>
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <div *ngFor="let item of bottomMenu"
+           class="p-ripple flex align-items-center p-3 border-round-md cursor-pointer text-700 transition-colors transition-duration-150 hover:surface-100"
+           [class.surface-100]="isActive(item.route)"
+           [class.text-primary]="isActive(item.route)"
+           [class.font-bold]="isActive(item.route)"
+           (click)="navigate(item.route)">
+        <i [class]="item.icon" class="text-xl mr-2"></i>
+        <span class="font-medium">{{ item.label }}</span>
+      </div>
+      
+      <p-divider></p-divider>
+      
+      <div class="flex align-items-center gap-3 px-2 py-1 cursor-pointer hover:surface-100 border-round-md transition-colors transition-duration-150">
+        <p-avatar image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle" size="large"></p-avatar>
+        <div class="flex flex-column">
+            <span class="font-bold text-sm">Amy Elsner</span>
+            <span class="text-500 text-xs">Admin</span>
         </div>
       </div>
     </div>
+  </div>
+</ng-template>
 
-    <!-- Bottom Section -->
-    <div class="flex flex-column align-items-center gap-3">
-      <div *ngFor="let item of bottomMenu"
-           (click)="navigate(item.route)"
-           class="flex align-items-center justify-content-center p-2 border-round cursor-pointer w-full transition-colors"
-           [ngClass]="{'bg-primary text-primary-contrast': isActive(item.route), 'text-600 hover:surface-200': !isActive(item.route)}">
-        <i [class]="item.icon"></i>
-      </div>
+<div class="flex h-screen overflow-hidden surface-ground">
+  
+  <div class="hidden md:flex flex-column w-18rem h-full p-3 bg-white shadow-2 flex-shrink-0 z-5">
+    <ng-container *ngTemplateOutlet="menuContent"></ng-container>
+  </div>
 
-      <p-divider></p-divider>
+  <p-sidebar [(visible)]="sidebarVisible" styleClass="w-18rem">
+    <ng-container *ngTemplateOutlet="menuContent"></ng-container>
+  </p-sidebar>
 
-      <!-- User Avatar -->
-      <p-avatar image="https://www.primefaces.org/cdn/primevue/images/landing/apps/main-avatar.png"
-                shape="circle"
-                size="large">
-      </p-avatar>
+  <div class="flex-1 flex flex-column h-screen overflow-hidden relative">
+    
+    <div class="md:hidden flex align-items-center justify-content-between p-3 bg-white shadow-1 z-4">
+        <div class="flex align-items-center gap-2">
+            <p-button icon="pi pi-bars" [text]="true" [rounded]="true" size="large" (click)="sidebarVisible = true"></p-button>
+            <span class="font-bold text-xl text-700">
+               {{ selectedSite === 'kmitl' ? 'KMITL' : 'KMUTT' }}
+            </span>
+        </div>
+        <p-avatar image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle"></p-avatar>
+    </div>
+
+    <div class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6 gap-6">
+      <router-outlet></router-outlet>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content p-3 surface-card border-round shadow-1 flex-1 h-screen overflow-y-auto">
-    <router-outlet></router-outlet>
-  </div>
 </div>
