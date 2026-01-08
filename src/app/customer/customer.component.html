@@ -1,82 +1,90 @@
-<div class="card p-4">
-  <h2>Customers</h2>
-  <p>The analysis list here shows all users</p>
-
-  <div class="flex align-items-center justify-content-between mb-4">
-    <p-chip label="{{allCustomers.length}} Active Users" icon="pi pi-circle-fill" styleClass="text-green-500"></p-chip>
-    <div class="flex gap-2">
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input pInputText type="text" placeholder="Search Customers" />
-      </span>
-      <button pButton icon="pi pi-filter" class="p-button-outlined" pTooltip="Filter Customers"></button>
-      <button pButton icon="pi pi-refresh" class="p-button-outlined" pTooltip="Refresh List"></button>
+<div class="flex flex-column gap-4 w-full p-4 surface-ground">
+  
+  <div class="grid grid-nogutter">
+    <div *ngFor="let metric of metrics" class="col-12 md:col-6 lg:col-3 p-2">
+      <p-card styleClass="shadow-2 border-none h-full border-round-xl">
+        <div class="flex align-items-center justify-content-between">
+          <div>
+            <span class="block text-500 text-sm font-medium mb-1">{{ metric.title }}</span>
+            <div class="text-3xl font-bold text-blue-600">{{ metric.value }}</div>
+            <div class="text-xs text-blue-400 mt-1 font-medium">{{ metric.subtext }}</div>
+          </div>
+          <div class="w-3rem h-3rem border-round bg-blue-50 flex align-items-center justify-content-center">
+            <i [class]="metric.icon" class="text-xl text-blue-700"></i>
+          </div>
+        </div>
+      </p-card>
     </div>
   </div>
 
-  <p-table 
-      [value]="allCustomers" 
-      [paginator]="true" 
-      [rows]="5" 
-      [responsiveLayout]="'scroll'"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} customers">
+  <div class="w-full bg-white p-3 border-round-xl shadow-1 border-1 border-100 flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="flex flex-wrap align-items-center gap-2">
+      <i class="pi pi-arrow-right-arrow-left text-400"></i>
+      <p-calendar [(ngModel)]="selectedDate" dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" [showIcon]="true" styleClass="w-10rem p-inputtext-sm"></p-calendar>
+      <p-dropdown [options]="userTypes" placeholder="ประเภทผู้ใช้" styleClass="w-10rem p-inputtext-sm surface-50 border-none"></p-dropdown>
+      <p-dropdown [options]="statuses" placeholder="สถานะ" styleClass="w-8rem p-inputtext-sm"></p-dropdown>
+      <p-dropdown [options]="sortOptions" placeholder="เรียงตาม" styleClass="w-8rem p-inputtext-sm"></p-dropdown>
+      <p-button label="ตัวกรอง" icon="pi pi-filter" size="small"></p-button>
+    </div>
+  </div>
 
-    <ng-template pTemplate="header">
-      <tr>
-        <th style="width:3rem">
-          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-        </th>
-        <th>Avatar</th>
-        <th>Name</th>
-        <th>Title</th>
-        <th>Company</th>
-        <th>Email</th>
-        <th>Lead Source</th>
-        <th>Status</th>
-        <th>Online</th>
-        <th>Chat</th>
-      </tr>
-    </ng-template>
+  <div class="surface-card border-round-xl shadow-3 overflow-hidden">
+    <div class="flex align-items-center justify-between p-4 border-bottom-1 border-100 bg-white">
+      <div class="flex align-items-center gap-3">
+        <span class="text-blue-600 font-bold text-lg border-bottom-2 border-blue-600 pb-1">รายการผู้ใช้งาน</span>
+        <p-button label="เพิ่มผู้ใช้งานใหม่" icon="pi pi-user-plus" [outlined]="true" size="small"></p-button>
+      </div>
+      
+      <p-iconField iconPosition="right">
+        <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+        <input type="text" pInputText placeholder="ค้นหาผู้ใช้งาน" class="p-inputtext-sm w-15rem" />
+      </p-iconField>
+    </div>
 
-    <ng-template pTemplate="body" let-customer>
-      <tr>
-        <td>
-          <p-tableCheckbox [value]="customer"></p-tableCheckbox>
-        </td>
-        <td>
-          <div class="flex align-items-center gap-2">
-            <p-avatar *ngIf="customer.avatar" [image]="customer.avatar" shape="circle" size="large"></p-avatar>
-            <p-avatar *ngIf="!customer.avatar" [label]="customer.initials" shape="circle" size="large"></p-avatar>
-          </div>
-        </td>
-        <td>{{ customer.name }}</td>
-        <td>{{ customer.title }}</td>
-        <td><i class="pi pi-briefcase mr-2"></i>{{ customer.company }}</td>
-        <td>{{ customer.email }}</td>
-        <td>{{ customer.leadSource }}</td>
-        <td>
-          <p-tag value="{{ customer.status }}" severity="{{ getSeverity(customer.status) }}"></p-tag>
-        </td>
-        <td>
-          <p-tag [value]="customer.online ? 'Online' : 'Offline'" [severity]="customer.online ? 'success' : 'secondary'"></p-tag>
-        </td>
-        <td>
-          <button 
-            pButton 
-            icon="pi pi-comments" 
-            class="p-button-text" 
-            pTooltip="Open Chat" 
-            (click)="openChat(customer)">
-          </button>
-        </td>
-      </tr>
-    </ng-template>
+    <p-table [value]="users" [(selection)]="selectedUsers" [paginator]="true" [rows]="8" styleClass="p-datatable-sm p-datatable-striped">
+      <ng-template pTemplate="header">
+        <tr class="text-sm text-600 bg-gray-50">
+          <th style="width: 3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+          <th>ผู้ใช้งาน</th>
+          <th>วันที่สมัคร</th>
+          <th>วันที่หมดอายุ</th>
+          <th>ประเภท</th>
+          <th>สถานะ</th>
+          <th>การใช้งานล่าสุด</th>
+          <th>จัดการ</th>
+        </tr>
+      </ng-template>
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="10" class="text-center">No customers found.</td>
-      </tr>
-    </ng-template>
-  </p-table>
+      <ng-template pTemplate="body" let-user>
+        <tr class="text-sm">
+          <td><p-tableCheckbox [value]="user"></p-tableCheckbox></td>
+          <td>
+            <div class="flex align-items-center gap-2">
+              <p-avatar icon="pi pi-user" shape="circle" styleClass="bg-blue-50 text-blue-500"></p-avatar>
+              <div class="flex flex-column">
+                <span class="font-semibold text-800">{{user.name}}</span>
+                <span class="text-xs text-500">User: {{user.id}}</span>
+              </div>
+            </div>
+          </td>
+          <td>{{user.registerDate}}</td>
+          <td>{{user.expiryDate}}</td>
+          <td>{{user.type}}</td>
+          <td>
+            <span [ngClass]="user.status === 'ระงับ' ? 'text-orange-500 font-bold' : 'text-blue-500 font-bold'">
+                {{user.status}}
+            </span>
+          </td>
+          <td class="text-500">{{user.lastActive}}</td>
+          <td>
+            <div class="flex gap-2">
+              <p-button label="แก้ไข" [link]="true" size="small" class="p-0"></p-button>
+              <p-button label="ลบ" [link]="true" severity="danger" size="small" class="p-0"></p-button>
+              <p-button label="ดูประวัติ" [link]="true" severity="secondary" size="small" class="p-0"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 </div>

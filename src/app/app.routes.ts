@@ -8,13 +8,14 @@ import { CustomerComponent } from './customer/customer.component';
 import { CardComponent } from './card/card.component';
 import { VideoComponent } from './video/video.component';
 import { StarComponent } from './inbox/star/star.component';
+import { FloorPlanViewerComponent } from './floor-plan-viewer.componentfloor-plan-viewer/floor-plan-viewer/floor-plan-viewer.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'chat', component: ChatComponent },
   { 
-    path: 'inbox', 
+    path: 'buildings', 
     component: InboxComponent,
     children: [
       { path: '', component: InboxListComponent },      // <-- default child route
@@ -24,6 +25,7 @@ export const routes: Routes = [
   },
   { path: 'customer', component: CustomerComponent },
   { path: 'card', component: CardComponent },
-  { path: 'video', component: VideoComponent }
+  { path: 'video', component: VideoComponent },
+  { path: 'fp', component: FloorPlanViewerComponent }
 ];
 
