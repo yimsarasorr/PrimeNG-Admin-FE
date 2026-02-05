@@ -10,7 +10,9 @@ import { DynamicDialogModule } from 'primeng/dynamicdialog';
 import { RippleModule } from 'primeng/ripple';
 import { SidebarModule } from 'primeng/sidebar';
 import { ButtonModule } from 'primeng/button';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { DropdownModule } from 'primeng/dropdown';
+import { TooltipModule } from 'primeng/tooltip';
+import { OverlayPanelModule } from 'primeng/overlaypanel'; // ✅ 1. Import OverlayPanel
 import { PrimeNG } from 'primeng/config';
 
 // Services
@@ -30,24 +32,26 @@ import { filter } from 'rxjs/operators';
     RippleModule,
     SidebarModule,
     ButtonModule,
-    SelectButtonModule
+    DropdownModule,
+    TooltipModule,
+    OverlayPanelModule // ✅ 2. Add to imports array
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
   title = 'PrimeNG Admin';
-  
-  // ✅ ADDED: This missing property caused the error
   activeRoute: string = ''; 
-  
   sidebarVisible: boolean = false;
   
-  // Toggle Configuration
-  selectedSite: string = 'kmitl';
+  selectedSite: string = 'all'; 
+  
   siteOptions: any[] = [
+    { label: 'All Sites (ภาพรวม)', value: 'all' },
     { label: 'KMITL', value: 'kmitl' },
-    { label: 'KMUTT', value: 'kmutt' }
+    { label: 'KMITL2', value: 'kmitl2' },
+    { label: 'KMUTT', value: 'kmutt' },
+    { label: 'KMUTT2', value: 'kmutt2' }
   ];
 
   topMenu: any[] = [];
@@ -58,27 +62,24 @@ export class AppComponent implements OnInit, OnDestroy {
     private modalService: ModalService,
     private primeng: PrimeNG
   ) {
-    // Subscribe to router events to update active state
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.activeRoute = event.url;
-        this.sidebarVisible = false; // Close sidebar on mobile when navigating
+        this.sidebarVisible = false; 
       });
   }
 
   ngOnInit() {
-    // Enable Ripple
     this.primeng.ripple.set(true);
 
-    // Menu Items
     this.topMenu = [
       { label: 'หน้าหลัก', icon: 'pi pi-home', route: '/dashboard' },
       { label: 'อาคาร', icon: 'pi pi-building', route: '/buildings' },
-      { label: 'จัดการการจอง', icon: 'pi pi-th-large', route: '/card' },
+      { label: 'จัดการการจอง', icon: 'pi pi-th-large', route: '/reserve' },
       { label: 'จัดการผู้ใช้งาน', icon: 'pi pi-user', route: '/customer' },
       { label: 'แจ้งเตือน', icon: 'pi pi-comment', route: '/chat' },
-      { label: '...', icon: 'pi pi-video', route: '/video' }
+      { label: 'Video', icon: 'pi pi-video', route: '/video' }
     ];
 
     this.bottomMenu = [
@@ -93,12 +94,17 @@ export class AppComponent implements OnInit, OnDestroy {
     this.modalService.ngOnDestroy();
   }
 
-  // Check active route for styling
   isActive(path: string): boolean {
     return this.activeRoute === path || this.router.url === path;
   }
 
   navigate(path: string) {
     this.router.navigate([path]);
+  }
+
+  // ✅ 3. Helper to get Current Site Label for Tooltip
+  get currentSiteLabel(): string {
+    const site = this.siteOptions.find(s => s.value === this.selectedSite);
+    return site ? site.label : 'Select Site';
   }
 }

@@ -74,9 +74,9 @@
           <td class="text-center text-blue-600 font-bold text-lg">{{ building.bookings }}</td>
           <td>
             <span [ngClass]="{
-              'text-blue-500': building.status === 'ใช้งานอยู่',
+              'text-blue-500': building.status === 'เปิดทำการ',
               'text-yellow-500': building.status === 'กำลังจะเปิด',
-              'text-gray-400': building.status === 'ปิดใช้งานอยู่'
+              'text-gray-400': building.status === 'ปิดทำการ'
             }">{{ building.status }}</span>
           </td>
           <td>

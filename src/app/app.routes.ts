@@ -24,7 +24,7 @@ export const routes: Routes = [
     ]
   },
   { path: 'customer', component: CustomerComponent },
-  { path: 'card', component: CardComponent },
+  { path: 'reserve', component: CardComponent },
   { path: 'video', component: VideoComponent },
   { path: 'fp', component: FloorPlanViewerComponent }
 ];
