@@ -8,6 +8,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -82,7 +83,7 @@ export class LoginComponent {
   // ✅ เพิ่ม .trim() และ .toLowerCase() เพื่อตัดช่องว่างและแปลงเป็นตัวเล็ก
   const cleanEmail = this.email.trim().toLowerCase();
 
-  this.http.post('http://localhost:3000/api/login', { email: cleanEmail }).subscribe({
+  this.http.post(environment.apiUrl + '/login', { email: cleanEmail }).subscribe({
       next: (res: any) => {
         this.loading = false;
         // ✅ Show success message

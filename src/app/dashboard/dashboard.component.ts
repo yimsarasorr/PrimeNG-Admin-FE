@@ -80,9 +80,13 @@ export class DashboardComponent implements OnInit {
     return this.allActivities.filter(a => a.category === 'abnormal'); 
   }
 
-  // ✅ เพิ่ม Getter สำหรับดึงข้อมูล Data Revision / Admin Management
+  // ✅ ดึงเฉพาะ Log ที่เป็นการแก้ไขข้อมูล หรือ การจัดการสิทธิ์
   get revisionActivities() {
-    return this.allActivities.filter(a => a.log_type === 'Data Revision' || a.category === 'Admin Management');
+    return this.allActivities.filter(a => 
+      a.log_type === 'Data Revision' || 
+      a.logType === 'revision' || 
+      a.category === 'Admin Management'
+    );
   }
 
   viewUserHistory(userName: string) {

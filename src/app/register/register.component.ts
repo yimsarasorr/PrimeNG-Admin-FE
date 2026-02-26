@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { MessageModule } from 'primeng/message'; // Import Message Module
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -150,7 +151,7 @@ export class RegisterComponent {
     };
 
     // 3. Send to Backend
-    this.http.post('http://localhost:3000/api/register', payload).subscribe({
+    this.http.post(environment.apiUrl + '/register', payload).subscribe({
       next: (res: any) => {
         this.loading = false;
         // Show success and maybe redirect after a few seconds
