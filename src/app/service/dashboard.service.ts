@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 })
 export class DashboardService {
   // Make sure your NestJS backend is running on this port
-  private apiUrl = 'http://localhost:3000/dashboard'; 
+  private apiUrl = environment.apiUrl + '/dashboard';
 
   constructor(private http: HttpClient) { }
 

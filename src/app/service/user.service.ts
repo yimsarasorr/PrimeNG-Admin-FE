@@ -30,7 +30,7 @@ export interface User {
 })
 export class UserService {
   public supabase: SupabaseClient; 
-  private apiUrl = environment.apiUrl + '/users'; // URL ของ NestJS API สำหรับ User
+  private apiUrl = environment.apiUrl ; // URL ของ NestJS API สำหรับ User
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
