@@ -19,7 +19,7 @@
     </div>
   </div>
 
-  <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-3 border-round-xl shadow-1 border-1 border-gray-100">
+  <!-- <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-3 border-round-xl shadow-1 border-1 border-gray-100">
     <div class="flex flex-wrap items-center gap-3">
       <i class="pi pi-arrow-right-arrow-left text-gray-400 rotate-90 md:rotate-0"></i>
       
@@ -32,14 +32,14 @@
       
       <p-button label="ตัวกรอง" icon="pi pi-filter" size="small"></p-button>
     </div>
-  </div>
+  </div> -->
 
   <div class="bg-white border-round-xl border-1 border-gray-100 shadow-3 overflow-hidden flex flex-column">
     
     <div class="flex flex-wrap items-center justify-between p-4 gap-4 border-bottom-1 border-gray-100">
       <div class="flex items-center gap-2">
         <span class="text-blue-600 font-bold text-lg border-bottom-2 border-blue-600 pb-1">รายการการจอง</span>
-        <p-button label="เพิ่มการจองใหม่" icon="pi pi-user-plus" [outlined]="true" size="small" styleClass="text-blue-400 border-blue-400"></p-button>
+        <p-button label="เพิ่มการจองใหม่" icon="pi pi-user-plus" [outlined]="true" size="small" styleClass="text-blue-400 border-blue-400" (click)="showAddModal()"></p-button>
       </div>
 
       <p-iconField iconPosition="right">
@@ -104,3 +104,54 @@
     </p-table>
   </div>
 </div>
+
+
+
+
+<p-toast></p-toast>
+
+<p-dialog header="เพิ่มการจองใหม่" [(visible)]="displayAddModal" [modal]="true" [style]="{width: '450px'}" [draggable]="false" [resizable]="false">
+    <div class="flex flex-column gap-3 mt-3">
+        <div class="flex flex-column gap-2">
+            <label class="font-semibold text-sm">ผู้ใช้งาน (Hybrid / External)</label>
+            <p-dropdown [options]="userOptions" [(ngModel)]="newRes.user" placeholder="เลือกผู้ใช้งาน" [filter]="true" filterBy="label" styleClass="w-full"></p-dropdown>
+        </div>
+        
+        <div class="flex gap-3">
+            <div class="flex flex-column gap-2 w-6">
+                <label class="font-semibold text-sm">วันที่</label>
+                <p-calendar [(ngModel)]="newRes.date" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+            </div>
+            <div class="flex flex-column gap-2 w-6">
+    <label class="font-semibold text-sm">เวลา (เริ่มต้น - สิ้นสุด)</label>
+    <div class="flex align-items-center gap-2">
+        <p-calendar [(ngModel)]="newRes.startTime" [timeOnly]="true" hourFormat="24" 
+                    placeholder="09:00" styleClass="w-full"></p-calendar>
+        <span class="font-bold text-gray-500">-</span>
+        <p-calendar [(ngModel)]="newRes.endTime" [timeOnly]="true" hourFormat="24" 
+                    placeholder="12:00" styleClass="w-full"></p-calendar>
+    </div>
+</div>
+        </div>
+
+        <div class="flex flex-column gap-2">
+            <label class="font-semibold text-sm">อาคาร - ห้อง</label>
+            <input pInputText [(ngModel)]="newRes.room" placeholder="เช่น อาคาร A ห้อง 101" class="w-full" />
+        </div>
+
+        <div class="flex gap-3">
+            <div class="flex flex-column gap-2 w-6">
+                <label class="font-semibold text-sm">ประเภท</label>
+                <p-dropdown [options]="typeOptions" [(ngModel)]="newRes.type" appendTo="body" styleClass="w-full"></p-dropdown>
+            </div>
+            <div class="flex flex-column gap-2 w-6">
+                <label class="font-semibold text-sm">ผู้เชิญ / ผู้ติดต่อ</label>
+                <input pInputText [(ngModel)]="newRes.invitee" placeholder="ระบุชื่อผู้เชิญ" class="w-full" />
+            </div>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="ยกเลิก" icon="pi pi-times" [text]="true" severity="secondary" (click)="displayAddModal = false"></p-button>
+        <p-button label="บันทึก" icon="pi pi-check" (click)="saveReservation()"></p-button>
+    </ng-template>
+</p-dialog>

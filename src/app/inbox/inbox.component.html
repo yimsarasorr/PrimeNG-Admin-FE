@@ -16,26 +16,22 @@
     </div>
   </div>
 
-    <div class="w-full bg-white p-3 border-round-xl shadow-1 border-1 border-100 flex flex-wrap align-items-center justify-content-between gap-3">
+  <!-- <div class="w-full bg-white p-3 border-round-xl shadow-1 border-1 border-100 flex flex-wrap align-items-center justify-content-between gap-3">
     <div class="flex flex-wrap align-items-center gap-2">
-      <i class="pi pi-arrow-right-arrow-left text-400 rotate-90 md:rotate-0"></i>
       <p-dropdown [options]="[]" placeholder="ประเภทพาหนะ" styleClass="p-inputtext-sm w-12rem"></p-dropdown>
       <p-dropdown [options]="[]" placeholder="สถานะ" styleClass="p-inputtext-sm w-10rem"></p-dropdown>
       <p-dropdown [options]="[]" placeholder="ราคา" styleClass="p-inputtext-sm w-8rem"></p-dropdown>
-      <p-dropdown [options]="[]" placeholder="เรียงตาม" styleClass="p-inputtext-sm w-8rem"></p-dropdown>
       <p-button label="ตัวกรอง" icon="pi pi-filter" severity="primary" size="small"></p-button>
     </div>
-  </div>
-
+  </div> -->
 
   <div class="bg-white border-round-xl border-1 border-100 shadow-3 overflow-hidden flex flex-column">
     
     <div class="flex flex-wrap align-items-center justify-between p-4 gap-4 border-bottom-1 border-100">
       <div class="flex align-items-center gap-2">
         <span class="text-blue-600 font-bold text-lg border-bottom-2 border-blue-600 pb-1">รายการสถานที่</span>
-        <p-button label="เพิ่มอาคาร" icon="pi pi-plus-circle" [outlined]="true" size="small" styleClass="text-blue-400 border-blue-400"></p-button>
+        <p-button label="เพิ่มอาคาร" icon="pi pi-plus-circle" [outlined]="true" size="small" styleClass="text-blue-400 border-blue-400" (click)="openAddModal()"></p-button>
       </div>
-
       <p-iconField iconPosition="right">
         <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
         <input type="text" pInputText placeholder="ค้นหาสถานที่" class="p-inputtext-sm w-15rem" />
@@ -47,7 +43,7 @@
         <tr class="bg-gray-50 text-gray-600 text-sm">
           <th style="width: 3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
           <th>อาคาร</th>
-          <th>ที่อยู่</th>
+          <th>ที่อยู่ (Zone)</th>
           <th class="text-center">ผู้มาเยี่ยมในขณะนี้</th>
           <th class="text-center">การจองในวันนี้</th>
           <th>สถานะ</th>
@@ -61,7 +57,7 @@
           <td>
             <div class="flex align-items-center gap-3">
               <div class="w-2rem h-2rem border-round bg-gray-100 flex align-items-center justify-center border-1 border-gray-200">
-                <i class="pi pi-image text-gray-400"></i>
+                <i class="pi pi-building text-gray-400"></i>
               </div>
               <div class="flex flex-column">
                 <span class="font-semibold text-gray-800">{{ building.name }}</span>
@@ -69,22 +65,16 @@
               </div>
             </div>
           </td>
-          <td class="text-blue-500">{{ building.zone }}</td>
-          <td class="text-center text-blue-600 font-bold text-lg">{{ building.visitors }}</td>
-          <td class="text-center text-blue-600 font-bold text-lg">{{ building.bookings }}</td>
+          <td class="text-blue-500 font-medium">{{ building.zone }}</td>
+          <td class="text-center text-blue-600 font-bold text-lg">{{ building.visitors || 0 }}</td>
+          <td class="text-center text-blue-600 font-bold text-lg">{{ building.bookings || 0 }}</td>
           <td>
-            <span [ngClass]="{
-              'text-blue-500': building.status === 'เปิดทำการ',
-              'text-yellow-500': building.status === 'กำลังจะเปิด',
-              'text-gray-400': building.status === 'ปิดทำการ'
-            }">{{ building.status }}</span>
+            <span class="font-bold" [ngClass]="getSeverity(building.status)">{{ building.status }}</span>
           </td>
           <td>
             <div class="flex gap-2">
-              <p-button label="แก้ไข" [link]="true" size="small" styleClass="p-0 text-blue-500 text-xs"></p-button>
-              <p-button label="ปิด" [link]="true" size="small" styleClass="p-0 text-blue-400 text-xs"></p-button>
-              <p-button label="ลบ" [link]="true" size="small" styleClass="p-0 text-blue-400 text-xs"></p-button>
-              <p-button label="ดูประวัติ" [link]="true" size="small" styleClass="p-0 text-blue-300 text-xs"></p-button>
+              <p-button label="แก้ไข" [link]="true" size="small" styleClass="p-0 text-blue-500 text-xs" (click)="openEditModal(building)"></p-button>
+              <p-button label="ลบ" [link]="true" size="small" styleClass="p-0 text-red-400 text-xs" (click)="deleteBuilding(building)"></p-button>
             </div>
           </td>
         </tr>
@@ -92,3 +82,33 @@
     </p-table>
   </div>
 </div>
+
+<p-dialog [header]="isEditMode ? 'แก้ไขข้อมูลอาคาร' : 'เพิ่มอาคารใหม่'" [(visible)]="displayModal" [modal]="true" [style]="{width: '450px'}">
+  <div class="flex flex-column gap-3 mt-3">
+    <div class="flex flex-column gap-2">
+      <label class="font-semibold text-sm">ชื่ออาคาร</label>
+      <input pInputText [(ngModel)]="buildingForm.name" placeholder="เช่น อาคารเรียนรวม" class="w-full" />
+    </div>
+    <div class="flex flex-column gap-2">
+      <label class="font-semibold text-sm">เวลาทำการ (รายละเอียด)</label>
+      <input pInputText [(ngModel)]="buildingForm.detail" placeholder="เช่น เวลาเปิด-ปิด: 08:00 - 22:00 น." class="w-full" />
+    </div>
+    <div class="flex gap-3">
+      <div class="flex flex-column gap-2 w-6">
+        <label class="font-semibold text-sm">โซน (Zone)</label>
+        <p-dropdown [options]="zoneOptions" [(ngModel)]="buildingForm.zone" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+      <div class="flex flex-column gap-2 w-6">
+        <label class="font-semibold text-sm">สถานะ</label>
+        <p-dropdown [options]="statusOptions" [(ngModel)]="buildingForm.status" appendTo="body" styleClass="w-full"></p-dropdown>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="ยกเลิก" icon="pi pi-times" [text]="true" severity="secondary" (click)="displayModal = false"></p-button>
+    <p-button label="บันทึกข้อมูล" icon="pi pi-check" (click)="saveBuilding()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '400px'}"></p-confirmDialog>

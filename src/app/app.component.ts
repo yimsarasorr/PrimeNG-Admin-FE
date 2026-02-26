@@ -12,11 +12,12 @@ import { SidebarModule } from 'primeng/sidebar';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
-import { OverlayPanelModule } from 'primeng/overlaypanel'; // ✅ 1. Import OverlayPanel
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { PrimeNG } from 'primeng/config';
 
 // Services
 import { ModalService } from './service/modal.service';
+import { UserService, User } from './service/user.service';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -34,7 +35,7 @@ import { filter } from 'rxjs/operators';
     ButtonModule,
     DropdownModule,
     TooltipModule,
-    OverlayPanelModule // ✅ 2. Add to imports array
+    OverlayPanelModule
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -44,6 +45,8 @@ export class AppComponent implements OnInit, OnDestroy {
   activeRoute: string = ''; 
   sidebarVisible: boolean = false;
   
+  currentUser: User | null = null; 
+
   selectedSite: string = 'all'; 
   
   siteOptions: any[] = [
@@ -60,7 +63,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public router: Router,
     private modalService: ModalService,
-    private primeng: PrimeNG
+    private primeng: PrimeNG,
+    private userService: UserService
   ) {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -88,6 +92,14 @@ export class AppComponent implements OnInit, OnDestroy {
     ];
 
     this.modalService.initListener();
+
+    this.userService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+    });
+
+    this.userService.checkSession().subscribe({
+      error: () => console.log('User not logged in')
+    });
   }
 
   ngOnDestroy() {
@@ -102,9 +114,29 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.navigate([path]);
   }
 
-  // ✅ 3. Helper to get Current Site Label for Tooltip
   get currentSiteLabel(): string {
     const site = this.siteOptions.find(s => s.value === this.selectedSite);
     return site ? site.label : 'Select Site';
+  }
+
+get userInitials(): string {
+  if (!this.currentUser) return 'G';
+
+  // ✅ อ่านทั้ง firstName และ first_name
+  const f = this.currentUser.firstName || this.currentUser.first_name || '';
+  const l = this.currentUser.lastName || this.currentUser.last_name || '';
+
+  if (!f && !l) return 'U';
+
+  return (f.charAt(0) + l.charAt(0)).toUpperCase();
+}
+
+  // ✅ เพิ่มฟังก์ชัน Logout ตรงนี้
+  logout() {
+    this.userService.logout().subscribe(() => {
+      this.currentUser = null;       // ล้างค่า User ในตัวแปร
+      this.sidebarVisible = false;   // ปิด Sidebar
+      this.router.navigate(['/login']); // ดีดกลับไปหน้า Login
+    });
   }
 }

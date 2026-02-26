@@ -4,13 +4,16 @@ import { provideRouter } from "@angular/router";
 import { routes } from "./app.routes";
 import { providePrimeNG } from "primeng/config";
 
-// ✅ Import definePreset to create a custom theme
+// 👇 1. Import คำสั่งสำหรับ HTTP Client
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
+// 👇 2. Import ตัว Interceptor ที่เราสร้างไว้ (บรรทัดนี้แหละที่คุณขาดไป)
+import { authInterceptor } from './interceptors/auth.interceptor';
+
 import { definePreset } from '@primeuix/themes';
 import Aura from "@primeuix/themes/aura";
-
 import { DynamicDialogModule, DialogService } from "primeng/dynamicdialog";
 
-// ✅ Create a custom preset based on Aura
 const MyPreset = definePreset(Aura, {
     semantic: {
         primary: {
@@ -19,7 +22,7 @@ const MyPreset = definePreset(Aura, {
             200: '{blue.200}',
             300: '{blue.300}',
             400: '{blue.400}',
-            500: '{blue.500}', // This is your main primary color
+            500: '{blue.500}',
             600: '{blue.600}',
             700: '{blue.700}',
             800: '{blue.800}',
@@ -37,13 +40,16 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       ripple: true,
       theme: {
-        preset: MyPreset, // ✅ Use the custom preset here
+        preset: MyPreset,
         options: {
-            darkModeSelector: 'none' // Disables dark mode
+            darkModeSelector: 'none'
         }
       },
     }),
     importProvidersFrom(DynamicDialogModule),
     DialogService,
+
+    // ✅ ตรงนี้จะหายแดงแล้ว เพราะเรา import มาครบแล้ว
+    provideHttpClient(withInterceptors([authInterceptor])),
   ],
 };

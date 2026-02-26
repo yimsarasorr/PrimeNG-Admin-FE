@@ -62,13 +62,13 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-log>
                     <tr class="text-sm hover:surface-50 transition-colors white-space-nowrap">
-                        <td class="font-semibold text-600">{{ log.time }}</td>
+                        <td class="font-semibold text-600">{{ log.time_display || log.time }}</td>
                         <td>
                             <div class="flex align-items-center gap-2 text-700">
                                 <i [class]="getActivityIcon(log.type)"></i>
                                 <span class="uppercase text-xs font-bold border-round px-2 py-1 hidden sm:inline-block" 
-                                      [ngClass]="log.logType === 'revision' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'">
-                                    {{ log.logType === 'revision' ? 'DATA' : 'EVENT' }}
+                                      [ngClass]="(log.log_type === 'Data Revision' || log.logType === 'revision') ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'">
+                                    {{ (log.log_type === 'Data Revision' || log.logType === 'revision') ? 'DATA' : 'EVENT' }}
                                 </span>
                             </div>
                         </td>
@@ -81,9 +81,9 @@
                             </div>
                         </td>
                         <td class="text-600 hidden lg:table-cell text-overflow-ellipsis overflow-hidden" style="max-width: 200px">
-                            {{ log.detail || log.entityId }}
+                            {{ log.detail || log.entity_id || log.entityId }}
                         </td>
-                        <td><p-tag [value]="'Success'" severity="success" [rounded]="true"></p-tag></td>
+                        <td><p-tag [value]="log.status || 'Success'" severity="success" [rounded]="true"></p-tag></td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -113,13 +113,13 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-log>
                     <tr class="text-sm hover:bg-red-50 transition-colors white-space-nowrap">
-                        <td class="font-bold text-red-600">{{ log.time }}</td>
+                        <td class="font-bold text-red-600">{{ log.time_display || log.time }}</td>
                         <td>
                             <div class="flex align-items-center gap-2 text-red-700 font-medium">
                                 <i [class]="getActivityIcon(log.type)"></i>
                                 <span class="uppercase text-xs font-bold border-round px-2 py-1 hidden sm:inline-block" 
-                                      [ngClass]="log.logType === 'revision' ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'">
-                                    {{ log.logType === 'revision' ? 'DATA' : 'EVENT' }}
+                                      [ngClass]="(log.log_type === 'Data Revision' || log.logType === 'revision') ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'">
+                                    {{ (log.log_type === 'Data Revision' || log.logType === 'revision') ? 'DATA' : 'EVENT' }}
                                 </span>
                             </div>
                         </td>
@@ -130,7 +130,7 @@
                                 <span>{{ log.user }}</span>
                              </div>
                         </td>
-                        <td class="text-red-600 hidden lg:table-cell">{{ log.detail || log.entityId }}</td>
+                        <td class="text-red-600 hidden lg:table-cell">{{ log.detail || log.entity_id || log.entityId }}</td>
                         <td>
                             <p-tag [value]="log.status === 'denied' ? 'Denied' : 'Error'" 
                                    [severity]="getStatusSeverity(log.status)" [rounded]="true"></p-tag>
@@ -138,6 +138,55 @@
                         <td>
                             <p-button icon="pi pi-search" [text]="true" [rounded]="true" severity="danger" size="small" label="Check"></p-button>
                         </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-tabPanel>
+
+        <p-tabPanel>
+            <ng-template pTemplate="header">
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-shield text-purple-500"></i>
+                    <span class="font-bold text-purple-600 hidden sm:inline">การจัดการระบบ (Data Revision)</span>
+                    <span class="font-bold text-purple-600 sm:hidden">Revision</span>
+                    <p-badge [value]="revisionActivities.length.toString()" severity="info" styleClass="bg-purple-500"></p-badge>
+                </div>
+            </ng-template>
+
+            <p-table [value]="revisionActivities" [paginator]="true" [rows]="8" responsiveLayout="scroll" styleClass="p-datatable-sm">
+                <ng-template pTemplate="header">
+                    <tr class="text-sm bg-purple-50 white-space-nowrap">
+                        <th style="min-width: 100px">เวลา</th>
+                        <th style="min-width: 100px">Type</th>
+                        <th style="min-width: 150px">Action</th>
+                        <th style="min-width: 150px">Admin</th>
+                        <th style="min-width: 200px" class="hidden lg:table-cell">Detail</th>
+                        <th style="min-width: 100px">Status</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-log>
+                    <tr class="text-sm hover:bg-purple-50 transition-colors white-space-nowrap">
+                        <td class="font-semibold text-purple-700">{{ log.time_display || log.time }}</td>
+                        <td>
+                            <div class="flex align-items-center gap-2 text-purple-700 font-medium">
+                                <i [class]="getActivityIcon(log.type)"></i>
+                                <span class="uppercase text-xs font-bold border-round px-2 py-1 hidden sm:inline-block bg-purple-100 text-purple-600">
+                                    DATA
+                                </span>
+                            </div>
+                        </td>
+                        <td class="font-bold text-800">{{ log.action }}</td>
+                        <td>
+                            <div class="flex align-items-center gap-2 cursor-pointer text-blue-600 hover:text-blue-800" 
+                                 (click)="viewUserHistory(log.user)" pTooltip="Click to view history">
+                                <p-avatar icon="pi pi-user-edit" shape="circle" size="normal" styleClass="bg-purple-100 text-purple-600 flex-shrink-0"></p-avatar>
+                                <span class="font-semibold underline">{{ log.user }}</span>
+                            </div>
+                        </td>
+                        <td class="text-600 hidden lg:table-cell text-overflow-ellipsis overflow-hidden" style="max-width: 200px">
+                            {{ log.detail || log.entity_id || log.entityId }}
+                        </td>
+                        <td><p-tag [value]="log.status || 'Success'" severity="info" [rounded]="true"></p-tag></td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -166,25 +215,24 @@
             <div *ngFor="let log of selectedUserHistory" class="mb-4 p-0 surface-card border-round-xl shadow-2 overflow-hidden border-1 border-gray-200">
                 
                 <div class="flex justify-content-between align-items-center p-3"
-                     [ngClass]="log.category === 'normal' ? 'bg-gray-50' : 'bg-red-50'">
+                     [ngClass]="log.category === 'Admin Management' ? 'bg-purple-50' : (log.category === 'normal' ? 'bg-gray-50' : 'bg-red-50')">
                     <div class="flex align-items-center gap-2 overflow-hidden">
                         <i [class]="getActivityIcon(log.type)" class="text-lg flex-shrink-0"></i>
                         <span class="font-bold text-700 white-space-nowrap text-overflow-ellipsis">{{ log.action }}</span>
                     </div>
                     <div class="flex flex-column align-items-end flex-shrink-0 ml-2">
-                        <span class="text-xs font-mono text-500">{{ log.time }}</span>
+                        <span class="text-xs font-mono text-500">{{ log.time_display || log.time }}</span>
                         <span class="text-[10px] font-bold px-2 border-round text-white mt-1"
-                              [ngClass]="log.logType === 'revision' ? 'bg-orange-500' : 'bg-blue-500'">
-                            {{ log.logType === 'revision' ? 'UPDATE' : 'ACT' }}
+                              [ngClass]="(log.log_type === 'Data Revision' || log.logType === 'revision') ? 'bg-orange-500' : 'bg-blue-500'">
+                            {{ (log.log_type === 'Data Revision' || log.logType === 'revision') ? 'UPDATE' : 'ACT' }}
                         </span>
                     </div>
                 </div>
                 
                 <div class="p-3">
-                    
-                    <div *ngIf="log.logType === 'revision'">
-                        <div class="text-xs text-500 mb-2 font-mono">Entity ID: {{ log.entityId }}</div>
-                        <div class="border-round bg-white border-1 border-gray-200 overflow-x-auto">
+                    <div *ngIf="(log.log_type === 'Data Revision' || log.logType === 'revision')">
+                        <div class="text-xs text-500 mb-2 font-mono">Entity/Detail: {{ log.entity_id || log.entityId || log.detail }}</div>
+                        <div class="border-round bg-white border-1 border-gray-200 overflow-x-auto" *ngIf="log.changes && log.changes.length > 0">
                             <table class="w-full text-sm" style="border-collapse: collapse; min-width: 250px;">
                                 <thead class="bg-gray-100 text-600 text-xs border-bottom-1 border-gray-200">
                                     <tr>
@@ -204,23 +252,23 @@
                         </div>
                     </div>
 
-                    <div *ngIf="log.logType === 'activity'">
+                    <div *ngIf="log.logType !== 'revision' && log.log_type !== 'Data Revision'">
                         <div class="grid grid-nogutter bg-blue-50 border-round p-2 text-sm text-700">
                             <div class="col-12 flex align-items-center mb-2">
                                 <i class="pi pi-map-marker text-blue-500 mr-2"></i>
                                 <span class="font-semibold mr-2">Loc:</span> 
-                                <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap">{{ log.meta.location }}</span>
+                                <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap">{{ log.meta?.location || 'Unknown' }}</span>
                             </div>
                             <div class="col-12 flex align-items-center mb-2">
                                 <i class="pi pi-mobile text-blue-500 mr-2"></i>
                                 <span class="font-semibold mr-2">Dev:</span> 
-                                <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap">{{ log.meta.device }}</span>
+                                <span class="text-overflow-ellipsis overflow-hidden white-space-nowrap">{{ log.meta?.device || 'Unknown' }}</span>
                             </div>
                             <div class="col-12 flex align-items-center">
                                 <i class="pi pi-shield text-blue-500 mr-2"></i>
                                 <span class="font-semibold mr-2">Result:</span> 
-                                <span [ngClass]="log.status === 'success' ? 'text-green-600' : 'text-red-600 font-bold'">
-                                    {{ log.meta.verification }}
+                                <span [ngClass]="log.status === 'Success' || log.status === 'success' ? 'text-green-600' : 'text-red-600 font-bold'">
+                                    {{ log.meta?.verification || log.status }}
                                 </span>
                             </div>
                         </div>
@@ -235,3 +283,6 @@
         </div>
     </div>
 </p-sidebar>
+
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
