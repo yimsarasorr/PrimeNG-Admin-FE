@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http'; 
+import { SortEvent } from 'primeng/api';
 
-// PrimeNG Modules
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -13,86 +14,424 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { DialogModule } from 'primeng/dialog';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+
+import { environment } from '../../environments/environment';
+
+import { ReservationService } from '../service/reservation.service';
+import { UserService } from '../service/user.service'; 
+import { BuildingService } from '../service/building.service'; 
+
+// 🚀 แก้ไขจุดที่ 1 และ 2: Import SupabaseClient และ createClient เข้ามาให้ถูกต้อง
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-card',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    CardModule,
-    ButtonModule,
-    TagModule,
-    InputTextModule,
-    CheckboxModule,
-    TableModule,
-    DropdownModule,
-    CalendarModule,
-    IconFieldModule,
-    InputIconModule
+    CommonModule, FormsModule, HttpClientModule, 
+    CardModule, ButtonModule, TagModule, InputTextModule, 
+    CheckboxModule, TableModule, DropdownModule, CalendarModule, 
+    IconFieldModule, InputIconModule, DialogModule, ToastModule, 
+    ConfirmDialogModule, ProgressSpinnerModule
   ],
+  providers: [MessageService, ConfirmationService], 
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.css']
 })
-export class CardComponent implements OnInit {
+export class CardComponent implements OnInit, OnDestroy {
   
-  selectedDate: Date | undefined;
-  selectedReservations: any[] = [];
+  // ✅ เก็บ Supabase ไว้สำหรับการทำ Realtime Subscription เท่านั้น
+  private supabase: SupabaseClient;
+  realtimeChannel: any;
 
-  // Metrics Data
-  metrics = [
-    { title: 'รายการจอง', value: '1,247', subtext: '+2 การจอง', icon: 'pi pi-users' },
-    { title: 'การจองที่ยังไม่ถึงเวลา', value: '892', subtext: '+1 การจอง', icon: 'pi pi-clock' },
-    { title: 'การจองที่ถึงกำหนด', value: '267', subtext: '+1 การจอง', icon: 'pi pi-check-circle' },
-    { title: 'การจองที่หมดอายุ', value: '88', subtext: '+1 การจอง', icon: 'pi pi-exclamation-circle' }
+  allReservations: any[] = [];
+  reservations: any[] = [];
+  metrics: any[] = [];
+  userOptions: any[] = []; 
+  
+  selectedReservations: any[] = []; 
+  buildingsList: any[] = [];
+  buildingOptions: any[] = [];
+  roomGroupOptions: any[] = [];
+
+  displayAddModal: boolean = false;
+  loading: boolean = false;
+  
+  // สำหรับ Filter ในหน้าตาราง
+  selectedFilter: string = 'รายการจองทั้งหมด';
+  selectedDate: Date | undefined;
+  
+  newRes: any = {
+    user: null,
+    date: null as Date | null,
+    startTime: null as Date | null,
+    endTime: null as Date | null,
+    time: '', 
+    selectedBuilding: null,
+    room: null,
+    type: 'Meeting',
+    invitee: ''
+  };
+
+  typeOptions = [
+    { label: 'Meeting', value: 'Meeting' },
+    { label: 'Maintenance', value: 'Maintenance' },
+    { label: 'Visit', value: 'Visit' }
   ];
 
-  // Table Data
-  reservations = [
-    // --- เดือนสิงหาคม (อดีต - ใช้งานแล้ว/หมดอายุ) ---
-    { user: 'กานดา มีทรัพย์', id: 'T25680801', date: '01/08/2568', time: '09.00-12.00', room: 'E12-201', type: 'Meeting', invitee: 'ทีมการตลาด', status: 'ใช้งานแล้ว' },
-    { user: 'สมชาย ใจดี', id: 'T25680818', date: '18/08/2568', time: '00.00-23.59', room: 'E12-203', type: '1-Day', invitee: '-', status: 'ใช้งานแล้ว' },
-    { user: 'วันดี สุขใจ', id: 'A25680820', date: '20/08/2568', time: '00.00-23.59', room: 'E12-203', type: '1-Day', invitee: 'สมชาย ใจดี', status: 'ยังไม่ใช้งาน' }, // (Data เดิม)
-    { user: 'วิชัย เก่งงาน', id: 'W25680825', date: '25/08/2568', time: '13.00-17.00', room: 'E12-205', type: 'Business', invitee: '-', status: 'หมดอายุ' },
+  constructor(
+    private reservationService: ReservationService,
+    private userService: UserService,
+    private buildingService: BuildingService,
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
+  ) {
+    // กำหนดค่า SupabaseClient สำหรับ Realtime เท่านั้น (ไม่ได้ใช้ดึงข้อมูลตรงๆ)
+    this.supabase = createClient(environment.supabaseUrl2, environment.supabaseKey2);
+  }
+
+  async ngOnInit() {
+    this.loadReservations(); 
+    this.loadUsersForDropdown(); 
+    this.loadBuildings();
+    this.setupRealtimeSubscription(); // เปิดการรับข้อมูล Realtime
+  }
+
+  ngOnDestroy() {
+    // คืนค่าหน่วยความจำ ลบ Subscription เมื่อปิดหน้าเว็บ
+    if (this.realtimeChannel) {
+      this.supabase.removeChannel(this.realtimeChannel);
+    }
+  }
+
+  // ✅ ฟังก์ชันจับตาดู Database (ถ้าตาราง reservations มีการอัปเดต จะเรียกโหลดตารางใหม่)
+  setupRealtimeSubscription() {
+    this.realtimeChannel = this.supabase
+      .channel('public:reservations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reservations' },
+        // 🚀 แก้ไขจุดที่ 3: ระบุให้ payload มี type เป็น any
+        (payload: any) => {
+          console.log('🔄 ข้อมูลมีการเปลี่ยนแปลงบน Database (Realtime):', payload);
+          this.loadReservations(); 
+        }
+      )
+      .subscribe();
+  }
+
+  loadBuildings() {
+    this.buildingService.getBuildings().subscribe({
+      next: (data) => {
+        this.buildingsList = data;
+        this.buildingOptions = data.map(b => ({ label: b.name, value: b }));
+      }
+    });
+  }
+
+loadReservations() {
+    this.loading = true;
+
+    // 🚀 เปลี่ยนมาเรียก API จาก NestJS
+    this.reservationService.getAllReservations().subscribe({
+      next: (data: any[]) => {
+        
+        // ข้อมูลจาก NestJS ได้ถูกจัด Format (เช่น วันที่) มาให้แล้ว นำไปใช้ได้เลย
+        this.allReservations = data.map(r => ({
+          ...r, 
+          _raw: { id: r.id } 
+        }));
+
+        // 🚀 เรียกฟังก์ชันคำนวณ Metrics เอง (เพราะ NestJS ไม่ได้คำนวณมาให้)
+        this.calculateMetrics(this.allReservations);
+
+        // อัปเดตตารางตาม Filter
+        this.filterReservations(this.selectedFilter);
+        
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching reservations:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ดึงข้อมูลไม่สำเร็จ' });
+        this.loading = false;
+      }
+    });
+  }
+
+  // ✅ เอาฟังก์ชันคำนวณ Metrics กลับมา (ดัดแปลงคำให้ตรงกับ Filter)
+  calculateMetrics(data: any[]) {
+    const total = data.length;
+    // สมมติว่าใน DB คุณเก็บ status เป็น 'รออนุมัติ', 'จองล่วงหน้า', 'กำลังใช้งาน', 'เสร็จสิ้น', ฯลฯ
+    const pending = data.filter(r => r.status === 'รออนุมัติ' || r.status === 'จองล่วงหน้า' || r.status === 'ยังไม่ใช้งาน').length;
+    const active = data.filter(r => r.status === 'ใช้งานแล้ว' || r.status === 'กำลังใช้งาน').length;
+    const inactive = data.filter(r => r.status === 'ปฏิเสธ' || r.status === 'หมดอายุ' || r.status === 'ยกเลิก').length;
+
+    this.metrics = [
+      { title: 'รายการจองทั้งหมด', value: total.toLocaleString(), subtext: 'Total Requests', icon: 'pi pi-users', color: 'blue' },
+      { title: 'การจองที่ยังไม่ถึงเวลา', value: pending.toLocaleString(), subtext: 'Pending/Upcoming', icon: 'pi pi-clock', color: 'yellow' },
+      { title: 'การจองที่ถึงกำหนด', value: active.toLocaleString(), subtext: 'Active/Completed', icon: 'pi pi-check-circle', color: 'green' },
+      { title: 'การจองที่หมดอายุ', value: inactive.toLocaleString(), subtext: 'Rejected/Canceled', icon: 'pi pi-exclamation-circle', color: 'gray' }
+    ];
+  }
+
+  // 💡 ปรับฟังก์ชัน applyFilters() ให้ตรงกับคำที่ Edge Function ส่งมา
+  // ✅ ใช้ applyFilters ตัวนี้แค่ตัวเดียวเท่านั้น
+  applyFilters() {
+    let filtered = [...this.allReservations];
     
-    // --- เดือนกันยายน (อดีต/ปัจจุบัน) ---
-    { user: 'มั่งมี ศรีสุข', id: 'S25680902', date: '02/09/2568', time: '8.00-17.00', room: 'E12-203', type: 'Business', invitee: 'สมชาย ใจดี', status: 'หมดอายุ' },
-    { user: 'ปีเตอร์ ปาร์ค', id: 'P25680910', date: '10/09/2568', time: '00.00-23.59', room: 'E12-204', type: '1-Day', invitee: '-', status: 'ใช้งานแล้ว' },
-    { user: 'ณัฐพล คนขยัน', id: 'N25680915', date: '15/09/2568', time: '09.00-18.00', room: 'E12-Meeting1', type: 'Meeting', invitee: 'ลูกค้า VIP', status: 'ยกเลิก' },
-    { user: 'มกรา ปีใหม่', id: 'T25680923', date: '23/09/2568', time: '8.00-17.00', room: 'E12-203', type: 'Business', invitee: '-', status: 'หมดอายุ' },
-    { user: 'ลลิตา น่ารัก', id: 'L25680930', date: '30/09/2568', time: '13.00-16.00', room: 'E12-202', type: 'Business', invitee: '-', status: 'ใช้งานแล้ว' },
+    // อิงตาม title ของ Metrics ที่ Edge Function ส่งมา (ใน response.metrics)
+    const statusMap: { [key: string]: string | string[] } = {
+      'รายการจอง': 'ALL',
+      'รายการจองทั้งหมด': 'ALL', // เผื่อไว้เผื่อกดจาก Tab เดิม
+      'การจองที่ถึงกำหนด': ['ใช้งานแล้ว', 'กำลังใช้งาน'], 
+      'การจองที่ยังไม่ถึงเวลา': ['ยังไม่ใช้งาน', 'จองล่วงหน้า'],
+      'การจองที่หมดอายุ': ['หมดอายุ', 'ยกเลิก']
+    };
 
-    // --- เดือนตุลาคม (ปัจจุบัน/อนาคตใกล้) ---
-    { user: 'แสน สาหัส', id: 'U25681013', date: '13/10/2568', time: '00.00-23.59', room: 'E12-203', type: '1-Day', invitee: '-', status: 'ใช้งานแล้ว' },
-    { user: 'สมยศ ยอดเยี่ยม', id: 'Y25681014', date: '14/10/2568', time: '08.00-12.00', room: 'E12-201', type: 'Half-Day', invitee: '-', status: 'ยังไม่ใช้งาน' },
-    { user: 'ดูดี หล่อรวย', id: 'U25681016', date: '16/10/2568', time: '8.00-17.00', room: 'E12-203', type: 'Business', invitee: 'สมชาย ใจดี', status: 'ยังไม่ใช้งาน' },
-    { user: 'จิราพร อ่อนหวาน', id: 'J25681020', date: '20/10/2568', time: '10.00-12.00', room: 'E12-Meeting2', type: 'Meeting', invitee: 'ทีม Dev', status: 'ยังไม่ใช้งาน' },
-    { user: 'ทศพล คนจริง', id: 'T25681025', date: '25/10/2568', time: '00.00-23.59', room: 'E12-204', type: '1-Day', invitee: 'เพื่อนร่วมงาน', status: 'ยังไม่ใช้งาน' },
-    { user: 'เอกชัย ไชโย', id: 'E25681028', date: '28/10/2568', time: '09.00-17.00', room: 'E12-205', type: 'Business', invitee: '-', status: 'ยกเลิก' },
+    const targetStatus = statusMap[this.selectedFilter] || 'ALL';
 
-    // --- เดือนพฤศจิกายน (อนาคต - จองล่วงหน้า) ---
-    { user: 'สมร รักดี', id: 'A25681105', date: '05/11/2568', time: '00.00-23.59', room: 'E12-203', type: '1-Day', invitee: 'สมชาย ใจดี', status: 'ใช้งานแล้ว' }, // (Data เดิม - อาจจะเป็นการจองย้อนหลังหรือข้อมูลตัวอย่าง)
-    { user: 'บุญมี มีบุญ', id: 'B25681110', date: '10/11/2568', time: '08.00-17.00', room: 'E12-201', type: 'Business', invitee: '-', status: 'ยังไม่ใช้งาน' },
-    { user: 'กมลชนก ปกป้อง', id: 'K25681115', date: '15/11/2568', time: '13.00-17.00', room: 'E12-202', type: 'Half-Day', invitee: '-', status: 'ยังไม่ใช้งาน' },
-    { user: 'วิทยา พาเพลิน', id: 'W25681122', date: '22/11/2568', time: '09.00-16.00', room: 'E12-Meeting1', type: 'Meeting', invitee: 'ทีม HR', status: 'ยังไม่ใช้งาน' },
-    { user: 'สุดสวย รวยเสน่ห์', id: 'S25681128', date: '28/11/2568', time: '00.00-23.59', room: 'E12-203', type: '1-Day', invitee: '-', status: 'ยังไม่ใช้งาน' },
+    if (targetStatus !== 'ALL') {
+      if (Array.isArray(targetStatus)) {
+        filtered = filtered.filter(r => targetStatus.includes(r.status));
+      } else {
+        filtered = filtered.filter(r => r.status === targetStatus);
+      }
+    }
 
-    // --- เดือนธันวาคม (อนาคตไกล) ---
-    { user: 'อาทิตย์ สดใส', id: 'A25681201', date: '01/12/2568', time: '08.00-17.00', room: 'E12-205', type: 'Business', invitee: '-', status: 'ยังไม่ใช้งาน' },
-    { user: 'นภา ฟ้าคราม', id: 'N25681210', date: '10/12/2568', time: '00.00-23.59', room: 'E12-204', type: '1-Day', invitee: 'ครอบครัว', status: 'ยังไม่ใช้งาน' },
-    { user: 'ธนา พาณิชย์', id: 'T25681225', date: '25/12/2568', time: '18.00-22.00', room: 'E12-EventHall', type: 'Event', invitee: 'พนักงานทุกคน', status: 'ยังไม่ใช้งาน' }
-];
+    if (this.selectedDate) {
+      const filterDateStr = this.formatDateToThai(this.selectedDate);
+      filtered = filtered.filter(r => r.date === filterDateStr);
+    }
+    
+    this.reservations = filtered;
+  }
 
-  ngOnInit() {}
+  updateStatus(reservation: any, newStatus: string) {
+    const payload = { status: newStatus };
+    const targetId = reservation._raw?.id || reservation.id;
+    
+    this.reservationService.updateReservation(targetId, payload).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนสถานะเป็น "${newStatus}" เรียบร้อยแล้ว` });
+        // หมายเหตุ: เราไม่จำเป็นต้องเรียก loadReservations() ตรงนี้อีก เพราะ Realtime จะทำงานแทน
+      },
+      error: (err) => {
+        console.error('Error updating status:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถอัปเดตสถานะได้' });
+      }
+    });
+  }
 
-  // Helper for Tag Severity
-  // Note: p-tag uses 'warning', p-button uses 'warn'
-  getSeverity(status: string): "success" | "secondary" | "info" | "warning" | "danger" | "contrast" | undefined {
+  onBuildingSelect() {
+    this.newRes.room = null;
+    const building = this.newRes.selectedBuilding;
+    if (!building || !building.floors) {
+      this.roomGroupOptions = [];
+      return;
+    }
+
+    this.roomGroupOptions = building.floors.map((floor: any) => ({
+      label: floor.floorName,
+      items: floor.rooms.map((room: any) => {
+        const roomName = typeof room === 'string' ? room : room.name;
+        const roomStatus = typeof room === 'string' ? 'ว่าง' : room.status;
+
+        return {
+          label: roomStatus === 'ว่าง' ? roomName : `${roomName} (${roomStatus})`,
+          value: roomName,
+          disabled: roomStatus !== 'ว่าง' 
+        };
+      })
+    }));
+  }
+
+  loadUsersForDropdown() {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        const filtered = users.filter(u => u.category === 'Hybrid' || u.category === 'External');
+        this.userOptions = filtered.map(u => ({
+          label: `${u.first_name || u.firstName} ${u.last_name || u.lastName} (${u.company})`,
+          value: `${u.first_name || u.firstName} ${u.last_name || u.lastName}`
+        }));
+      }
+    });
+  }
+
+  confirmUpdateStatus(reservation: any, newStatus: string) {
+    const actionText = newStatus === 'อนุมัติแล้ว' ? 'อนุมัติ' : 'ปฏิเสธ';
+    const iconClass = newStatus === 'อนุมัติแล้ว' ? 'pi pi-check-circle text-green-500' : 'pi pi-times-circle text-red-500';
+    const buttonClass = newStatus === 'อนุมัติแล้ว' ? 'p-button-success' : 'p-button-danger';
+
+    this.confirmationService.confirm({
+      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> สิทธิ์การเข้าอาคารของ <b>${reservation.user}</b>?`,
+      header: `ยืนยันการ${actionText}`,
+      icon: iconClass,
+      acceptLabel: 'ยืนยัน',
+      rejectLabel: 'ยกเลิก',
+      acceptButtonStyleClass: buttonClass,
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        this.updateStatus(reservation, newStatus);
+      }
+    });
+  }
+
+  showAddModal() {
+    this.displayAddModal = true;
+    this.newRes = { 
+        user: null, date: null, startTime: null, endTime: null, time: '', 
+        selectedBuilding: null, room: null, type: 'Meeting', invitee: '' 
+    };
+    this.roomGroupOptions = [];
+  }
+
+  saveReservation() {
+    if (this.newRes.startTime && this.newRes.endTime) {
+        const startH = String(this.newRes.startTime.getHours()).padStart(2, '0');
+        const startM = String(this.newRes.startTime.getMinutes()).padStart(2, '0');
+        const endH = String(this.newRes.endTime.getHours()).padStart(2, '0');
+        const endM = String(this.newRes.endTime.getMinutes()).padStart(2, '0');
+        this.newRes.time = `${startH}:${startM}-${endH}:${endM}`;
+    }
+
+    if (!this.newRes.user || !this.newRes.date || !this.newRes.room) {
+      this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'กรุณากรอกข้อมูลให้ครบ' });
+      return;
+    }
+
+    const validFrom = new Date(this.newRes.date);
+    if(this.newRes.startTime) {
+      validFrom.setHours(this.newRes.startTime.getHours(), this.newRes.startTime.getMinutes());
+    }
+
+    const expiresAt = new Date(this.newRes.date);
+    if(this.newRes.endTime) {
+      expiresAt.setHours(this.newRes.endTime.getHours(), this.newRes.endTime.getMinutes());
+    }
+
+    const payload = {
+        host_id: this.newRes.user, 
+        valid_from: validFrom.toISOString(),
+        expires_at: expiresAt.toISOString(),
+        building_id: this.newRes.selectedBuilding.name,
+        room_id: this.newRes.room,
+        pass_type: this.newRes.type,
+        invite_code: this.newRes.invitee || `INV-${Math.floor(Math.random() * 10000)}`, // จำลองรหัสเชิญถ้าไม่มี
+        status: 'รออนุมัติ' 
+    };
+
+    this.reservationService.createReservation(payload).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: 'เพิ่มการจองเรียบร้อย' });
+        this.displayAddModal = false;
+        // ไม่ต้อง this.loadReservations() เพราะมี Realtime อยู่แล้ว
+      },
+      error: (err) => {
+        console.error('Error creating reservation:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถสร้างการจองได้' });
+      }
+    });
+  }
+
+  // ✅ ระบบค้นหาและตัวกรอง Tab 
+  filterReservations(title: string) {
+    this.selectedFilter = title;
+    this.applyFilters();
+  }
+
+  onDateChange() {
+    this.applyFilters();
+  }
+
+  clearDate() {
+    this.selectedDate = undefined;
+    this.applyFilters();
+  }
+
+  // ✅ ระบบจัดเรียงวันที่ภาษาไทยที่แม่นยำ
+  customSort(event: SortEvent) {
+    if (!event.data || !event.field) return;
+
+    event.data.sort((data1: any, data2: any) => {
+      let value1 = data1[event.field!];
+      let value2 = data2[event.field!];
+      let result = null;
+
+      if (value1 == null && value2 != null) result = -1;
+      else if (value1 != null && value2 == null) result = 1;
+      else if (value1 == null && value2 == null) result = 0;
+      else if (event.field === 'date' && typeof value1 === 'string' && typeof value2 === 'string') {
+        const parseDate = (dateStr: string) => {
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            return parseInt(parts[2], 10) * 10000 + parseInt(parts[1], 10) * 100 + parseInt(parts[0], 10);
+          }
+          return 0;
+        };
+        const d1 = parseDate(value1);
+        const d2 = parseDate(value2);
+
+        if (d1 < d2) result = -1;
+        else if (d1 > d2) result = 1;
+        else {
+          const t1 = data1['time'] || '';
+          const t2 = data2['time'] || '';
+          result = t1.localeCompare(t2);
+        }
+      }
+      else if (typeof value1 === 'string' && typeof value2 === 'string') {
+        result = value1.localeCompare(value2, undefined, { numeric: true });
+      }
+      else {
+        result = (value1 < value2) ? -1 : (value1 > value2) ? 1 : 0;
+      }
+
+      return (event.order || 1) * (result || 0);
+    });
+  }
+
+  formatDateToThai(date: Date): string {
+    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const y = (date.getFullYear() + 543).toString();
+    return `${d}/${m}/${y}`;
+  }
+
+  getSeverity(status: string): any {
     switch (status) {
-      case 'ใช้งานแล้ว': return 'success';
-      case 'ยังไม่ถึงกำหนด': return 'warning';
-      case 'หมดอายุ': return 'danger';
+      case 'อนุมัติแล้ว': 
+      case 'สำเร็จ': return 'success';
+      case 'กำลังใช้งาน': return 'info';
+      case 'รออนุมัติ':
+      case 'จองล่วงหน้า': return 'warning';
+      case 'ปฏิเสธ':
+      case 'หมดอายุ': 
+      case 'ยกเลิก': return 'danger';
       default: return 'info';
     }
+  }
+
+  getMetricCardClass(metric: any): string {
+    const isSelected = this.selectedFilter === metric.title;
+    const baseClass = 'shadow-2 border-round-xl h-full cursor-pointer border-2 transition-colors transition-duration-200';
+    const color = metric.color || 'blue';
+
+    if (isSelected) {
+      return `${baseClass} border-${color}-500 bg-${color}-50`;
+    } else {
+      return `${baseClass} border-transparent bg-white hover:border-${color}-200`;
+    }
+  }
+
+  // ✅ เพิ่มฟังก์ชันจัดการสีตัวหนังสือของ Metric
+  getMetricTextClass(metric: any, shade: number): string {
+    const color = metric.color || 'blue';
+    return `text-${color}-${shade}`;
   }
 }
