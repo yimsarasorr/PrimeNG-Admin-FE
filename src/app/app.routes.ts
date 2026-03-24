@@ -1,13 +1,8 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { ChatComponent } from './chat/chat.component';
 import { InboxComponent } from './inbox/inbox.component';
-import { InboxListComponent } from './inbox/inboxlist/inboxlist.component';
 import { CustomerComponent } from './customer/customer.component';
 import { CardComponent } from './card/card.component';
-import { VideoComponent } from './video/video.component';
-import { StarComponent } from './inbox/star/star.component';
-import { FloorPlanViewerComponent } from './floor-plan-viewer.componentfloor-plan-viewer/floor-plan-viewer/floor-plan-viewer.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 
@@ -29,19 +24,9 @@ export const routes: Routes = [
     canActivate: [authGuard] 
   },
   { 
-    path: 'chat', 
-    component: ChatComponent, 
-    canActivate: [authGuard] 
-  },
-  { 
     path: 'buildings', 
     component: InboxComponent,
     canActivate: [authGuard], // Protecting the parent protects all children automatically
-    children: [
-      { path: '', component: InboxListComponent },
-      { path: 'list', component: InboxListComponent },
-      { path: 'star', component: StarComponent }
-    ]
   },
   { 
     path: 'customer', 
@@ -53,14 +38,5 @@ export const routes: Routes = [
     component: CardComponent, 
     canActivate: [authGuard] 
   },
-  { 
-    path: 'video', 
-    component: VideoComponent, 
-    canActivate: [authGuard] 
-  },
-  { 
-    path: 'fp', 
-    component: FloorPlanViewerComponent, 
-    canActivate: [authGuard] 
-  }
+ 
 ];

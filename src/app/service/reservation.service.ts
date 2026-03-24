@@ -1,39 +1,51 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, from, throwError } from 'rxjs'; 
+import { catchError, map, switchMap } from 'rxjs/operators'; 
 import { environment } from '../../environments/environment';
+import { SupabaseService } from './supabase.service';
 
-export interface Reservation {
-  user: string;
-  id: string;
-  date: string;
-  time: string;
-  room: string;
-  type: string;
-  invitee: string;
-  status: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ReservationService {
-  private apiUrl = environment.apiUrl + '/reservations';
+  private apiUrl = environment.apiUrl || 'https://fastpassadminapi.vercel.app/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private supabaseService: SupabaseService) {}
 
-  // ✅ เปลี่ยน URL ให้ตรงกับ Backend: /api/reservations/getallreservations
-  getReservations(): Observable<Reservation[]> {
-    return this.http.get<Reservation[]>(`${this.apiUrl}/getallreservations`);
+  private getHeaders(): Observable<HttpHeaders> {
+    return from(this.supabaseService.getAuthToken()).pipe(
+      map(token => {
+        let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+        if (token) headers = headers.set('Authorization', `Bearer ${token}`);
+        return headers;
+      })
+    );
   }
 
-  // ✅ เปลี่ยน URL ให้ตรงกับ Backend: /api/reservations/createreservation
+  getAllReservations(): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.get<any>(`${this.apiUrl}/reservations/getallreservations`, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  getReservationByUser(userName: string): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.post<any>(`${this.apiUrl}/reservations/getreservationbyuser`, { user: userName }, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
   createReservation(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/createreservation`, data);
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.post<any>(`${this.apiUrl}/reservations/createreservation`, data, { headers })),
+      catchError(err => throwError(() => err))
+    );
   }
 
-  // ✅ (เพิ่มให้) ดึงข้อมูลเฉพาะของ User ที่รับค่าทาง Body ตามที่เพิ่งแก้ไป
-  getReservationByUser(userName: string): Observable<Reservation[]> {
-    return this.http.post<Reservation[]>(`${this.apiUrl}/getreservationbyuser`, { user: userName });
+  updateReservation(id: string, data: any): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.put<any>(`${this.apiUrl}/reservations/${id}`, data, { headers })),
+      catchError(err => throwError(() => err))
+    );
   }
 }

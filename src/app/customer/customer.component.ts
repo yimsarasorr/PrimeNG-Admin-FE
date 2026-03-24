@@ -16,13 +16,11 @@ import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
-
-// ✅ Import โมดูลสำหรับ Dialog และ Toast
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
-import { UserService, User } from '../service/user.service';
+import { UserService } from '../service/user.service'; 
 
 @Component({
   selector: 'app-customer',
@@ -32,11 +30,8 @@ import { UserService, User } from '../service/user.service';
     TableModule, ButtonModule, CardModule, DropdownModule, 
     CalendarModule, InputTextModule, IconFieldModule, InputIconModule, 
     AvatarModule, TagModule, TooltipModule, BadgeModule,
-    
-    // ✅ นำเข้า Module ให้ Component รู้จัก
     ConfirmDialogModule, ToastModule 
   ],
-  // ✅ ต้องใส่ Providers ตรงนี้เสมอ เพื่อให้ Service ของ Modal สร้างขึ้นมาทำงานได้
   providers: [ConfirmationService, MessageService],
   templateUrl: './customer.component.html',
   styles: [`
@@ -45,47 +40,15 @@ import { UserService, User } from '../service/user.service';
   `]
 })
 export class CustomerComponent implements OnInit {
+  
   selectedCategory: string = 'All';
-  selectedUsers: User[] = [];
-  selectedDate: Date | undefined;
-  allUsers: User[] = [];
+  selectedUsers: any[] = []; 
+  
+  // ✅ ประกาศตัวแปรแค่ครั้งเดียวเท่านั้น!
+  users: any[] = [];
+  filteredUsers: any[] = [];
+  metrics: any[] = [];
 
-  metrics = [
-    { title: 'ผู้ใช้งานทั้งหมด', value: '...', subtext: 'Loading...', icon: 'pi pi-users' },
-    { title: 'กำลังปฏิบัติงาน', value: '...', subtext: 'On-site Now', icon: 'pi pi-building' },
-    { title: 'ผู้มาติดต่อ (Visitor)', value: '...', subtext: 'Logged Today', icon: 'pi pi-id-card' },
-    { title: 'แจ้งเตือนหมดอายุ', value: '...', subtext: 'Expired Access', icon: 'pi pi-exclamation-triangle' }
-  ];
-
-  roleOptions = [
-    { label: 'Role ทั้งหมด', value: null },
-    { label: 'Super Admin', value: 'Super Admin' },
-    { label: 'Admin', value: 'Admin' },
-    { label: 'Staff (พนักงาน)', value: 'Employee' },
-    { label: 'Hybrid Tech (ช่างประจำ)', value: 'Hybrid Tech' },
-    { label: 'Consultant (ที่ปรึกษา)', value: 'Consultant' },
-    { label: 'Security (รปภ.)', value: 'Security' },
-    { label: 'Technician (ช่างรายครั้ง)', value: 'Technician' },
-    { label: 'Guest', value: 'Guest' }
-  ];
-
-  authOptions = [
-    { label: 'ช่องทางทั้งหมด', value: null },
-    { label: 'App / Line OA', value: 'Line OA' },
-    { label: 'Kiosk (Walk-in)', value: 'Kiosk' },
-    { label: 'Face Scan', value: 'Face Scan' },
-    { label: 'แลกบัตร (ID Card)', value: 'ID Exchange' }
-  ];
-
-  statusOptions = [
-    { label: 'สถานะ', value: null },
-    { label: 'Active', value: 'Active' },
-    { label: 'Checked In', value: 'Checked In' },
-    { label: 'Checked Out', value: 'Checked Out' },
-    { label: 'Blacklist', value: 'Blacklist' }
-  ];
-
-  // ✅ Inject Service เข้ามาเพื่อเรียกใช้งาน
   constructor(
     private userService: UserService,
     private confirmationService: ConfirmationService,
@@ -96,99 +59,95 @@ export class CustomerComponent implements OnInit {
     this.loadUsers();
   }
 
+
   loadUsers() {
-    this.userService.getUsers().subscribe({
-      next: (data) => {
-        this.allUsers = data;
-        this.calculateMetrics(data); 
+    this.userService.getProfiles().subscribe({
+      next: (res: any) => { 
+        // ✅ ไม่ต้องเช็ค res.success แล้ว แค่มีข้อมูล res ส่งมาก็พอ
+        if (res) { 
+          
+          // 1️⃣ จัดการ Metrics
+          this.metrics = (res.metrics || []).map((m: any) => {
+            let icon = 'pi pi-users';
+            if (m.title === 'ผู้ดูแลระบบ') icon = 'pi pi-shield text-red-500';
+            if (m.title === 'ผู้ใช้งานทั่วไป') icon = 'pi pi-user text-blue-500';
+            return { ...m, icon };
+          });
+
+          // 2️⃣ จัดการ Profiles เข้าตาราง
+          this.users = (res.profiles || []).map((p: any) => {
+            let cat = 'External';
+            if (p.role === 'Admin' || p.role === 'Super Admin') cat = 'Admin Management';
+            else if (p.role === 'Staff' || p.role === 'Employee') cat = 'Internal';
+            else if (p.role === 'Partner' || p.role === 'Hybrid Tech') cat = 'Hybrid';
+
+            return {
+              id: p.id,
+              firstName: p.name || '-', 
+              lastName: '',
+              email: p.email,
+              phone: p.phone || '-',
+              role: p.role || 'Guest',
+              category: cat,
+              company: '-', 
+              authMethod: 'Email', 
+              registerDate: p.joined_date, 
+              expiryDate: null, 
+              status: p.status || 'Active', // ✅ ใช้สถานะจาก DB
+              avatar: p.avatar,
+              _raw: p 
+            };
+          });
+
+          this.applyFilters(); // อัปเดตตารางให้แสดงผล
+
+        }
       },
-      error: (err) => {
-        console.error('Error fetching users:', err);
+      error: (err: any) => {
+        console.error('Failed to load users:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถโหลดข้อมูลผู้ใช้งานได้' });
       }
     });
   }
 
-  calculateMetrics(data: User[]) {
-    const total = data.length;
-    const onSite = data.filter(u => u.status === 'Checked In').length;
-    const visitors = data.filter(u => u.category === 'External').length;
-    const expired = data.filter(u => this.isExpired(u.expiryDate ?? null)).length;
-
-    this.metrics = [
-      { title: 'ผู้ใช้งานทั้งหมด', value: total.toLocaleString(), subtext: 'Total Users', icon: 'pi pi-users' },
-      { title: 'กำลังปฏิบัติงาน', value: onSite.toLocaleString(), subtext: 'On-site Now', icon: 'pi pi-building' },
-      { title: 'ผู้มาติดต่อ (Visitor)', value: visitors.toLocaleString(), subtext: 'Logged Today', icon: 'pi pi-id-card' },
-      { title: 'แจ้งเตือนหมดอายุ', value: expired.toString(), subtext: 'Expired Access', icon: 'pi pi-exclamation-triangle' }
-    ];
-  }
-
-  get filteredUsers() {
-    if (this.selectedCategory === 'All') return this.allUsers;
-    if (this.selectedCategory === 'Admin Management') {
-        return this.allUsers.filter(user => user.role === 'Admin' || user.role === 'Super Admin');
-    }
-    return this.allUsers.filter(user => user.category === this.selectedCategory);
-  }
-
+  // ✅ ระบบ Filter 
   setCategory(category: string) {
     this.selectedCategory = category;
+    this.applyFilters();
   }
 
+  applyFilters() {
+    if (this.selectedCategory === 'All') {
+      this.filteredUsers = [...this.users];
+    } else if (this.selectedCategory === 'Admin Management') {
+      this.filteredUsers = this.users.filter(user => user.role === 'Admin' || user.role === 'Super Admin');
+    } else {
+      this.filteredUsers = this.users.filter(user => user.category === this.selectedCategory);
+    }
+  }
+
+  // ✅ ฟังก์ชันคำนวณตัวเลข (มีแค่ที่เดียว)
   getCount(category: string): number {
-    if (category === 'All') return this.allUsers.length;
-    return this.allUsers.filter(u => u.category === category).length;
+    if (category === 'All') return this.users.length;
+    return this.users.filter(u => u.category === category).length;
   }
 
   getAdminCount(): number {
-      return this.allUsers.filter(u => u.role === 'Admin' || u.role === 'Super Admin').length;
+    return this.users.filter(u => u.role === 'Admin' || u.role === 'Super Admin').length;
   }
 
-  // ✅ ฟังก์ชันสลับ Role แบบเด้ง Modal ยืนยัน และยิง API ไป Backend
-  changeAdminRole(user: User, newRole: string) {
-    this.confirmationService.confirm({
-      message: `คุณแน่ใจหรือไม่ที่จะเปลี่ยนสิทธิ์ของ <b>${user.first_name || user.email || 'ผู้ใช้นี้'}</b> เป็น <b class="text-primary">${newRole}</b> ?`,
-      header: 'ยืนยันการเปลี่ยนแปลงสิทธิ์',
-      icon: 'pi pi-exclamation-triangle text-yellow-500',
-      acceptLabel: 'ยืนยัน',
-      rejectLabel: 'ยกเลิก',
-      acceptButtonStyleClass: "p-button-success",
-      rejectButtonStyleClass: "p-button-text",
-      accept: () => {
-        // เมื่อ User กดยืนยัน -> สั่ง UserService ยิง API ไปแก้ไข Database
-        // (ต้องมั่นใจว่าใน user.service.ts มีฟังก์ชัน updateUserRole แล้วนะครับ)
-        this.userService.updateUserRole(user.id, newRole).subscribe({
-          next: () => {
-            // สำเร็จ! เปลี่ยนสิทธิ์บนหน้าจอทันที
-            user.role = newRole; 
-            
-            // โชว์แจ้งเตือนเด้งมุมขวา
-            this.messageService.add({ 
-              severity: 'success', 
-              summary: 'สำเร็จ', 
-              detail: `อัปเดตสิทธิ์เป็น ${newRole} เรียบร้อยแล้ว` 
-            });
-          },
-          error: (err) => {
-            console.error('Error updating role:', err);
-            this.messageService.add({ 
-              severity: 'error', 
-              summary: 'ผิดพลาด', 
-              detail: 'ไม่สามารถอัปเดตสิทธิ์ได้' 
-            });
-          }
-        });
-      }
-    });
-  }
-
+  // =====================================
+  // ส่วน UI Helpers (ไอคอน, สีสถานะ ฯลฯ)
+  // =====================================
   getRoleSeverity(role: string): "success" | "info" | "warning" | "danger" | "secondary" | "contrast" | undefined {
     switch (role) {
       case 'Super Admin': 
       case 'Admin': return 'primary' as any;
       case 'Security': return 'contrast';
+      case 'Staff':
       case 'Employee': return 'info';
       case 'Hybrid Tech': 
-      case 'Consultant': return undefined; 
+      case 'Partner': return undefined; 
       case 'Technician': 
       case 'Contractor': return 'warning';
       case 'Messenger': return 'secondary';
@@ -198,12 +157,21 @@ export class CustomerComponent implements OnInit {
   }
 
   getAuthIcon(method: string | null): string {
-    if (!method) return 'pi pi-question';
-    if (method.includes('Kiosk')) return 'pi pi-desktop';
-    if (method.includes('Line OA') || method === 'System' || method.includes('App')) return 'pi pi-mobile';
-    if (method === 'Face Scan') return 'pi pi-face-smile';
-    if (method.includes('ID Exchange') || method.includes('Card')) return 'pi pi-id-card';
-    return 'pi pi-cog';
+    if (!method || method.toLowerCase() === 'guest') return 'pi pi-user text-gray-400';
+    const m = method.toLowerCase();
+    if (m.includes('line')) return 'pi pi-comments text-green-500'; 
+    if (m.includes('magic') || m.includes('email')) return 'pi pi-envelope text-blue-500'; 
+    if (m.includes('kiosk')) return 'pi pi-desktop text-purple-500';
+    if (m.includes('face')) return 'pi pi-face-smile text-orange-500';
+    return 'pi pi-id-card text-gray-500';
+  }
+
+  getAuthText(method: string | null): string {
+    if (!method || method.toLowerCase() === 'guest') return 'Guest User';
+    const m = method.toLowerCase();
+    if (m.includes('line')) return 'LINE OA';
+    if (m.includes('magic') || m.includes('email')) return 'Magic Link';
+    return method; 
   }
 
   getStatusColor(status: string): string {
@@ -223,5 +191,69 @@ export class CustomerComponent implements OnInit {
     const today = new Date();
     today.setHours(0,0,0,0);
     return exp < today;
+  }
+
+  // =====================================
+  // ระบบจัดการ (Ban, Promote, Demote)
+  // =====================================
+  toggleBlacklist(user: any) {
+    const isCurrentlyBlacklisted = user.status === 'Blacklist';
+    const newStatus = isCurrentlyBlacklisted ? 'Active' : 'Blacklist';
+    const actionText = isCurrentlyBlacklisted ? 'ปลดแบล็คลิสต์' : 'แบล็คลิสต์';
+    const iconClass = isCurrentlyBlacklisted ? 'pi pi-check-circle text-green-500' : 'pi pi-ban text-red-500';
+    const buttonClass = isCurrentlyBlacklisted ? 'p-button-success' : 'p-button-danger';
+
+    this.confirmationService.confirm({
+      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> ผู้ใช้งาน <b>${user.firstName || user.email}</b> ?`,
+      header: `ยืนยันการ${actionText}`,
+      icon: iconClass,
+      acceptLabel: 'ยืนยัน',
+      rejectLabel: 'ยกเลิก',
+      acceptButtonStyleClass: buttonClass,
+      rejectButtonStyleClass: "p-button-text p-button-secondary",
+      accept: () => {
+        user.status = newStatus;
+        if (newStatus === 'Blacklist') user.category = 'Blacklist'; 
+        
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `ดำเนินการ${actionText}เรียบร้อยแล้ว` });
+        this.applyFilters();
+      }
+    });
+  }
+
+  confirmPromote(user: any) {
+    this.confirmationService.confirm({
+      message: `คุณแน่ใจหรือไม่ที่จะเลื่อนขั้น <b>${user.firstName}</b> เป็น Admin?`,
+      header: 'ยืนยันการเลื่อนขั้น (Promote)',
+      icon: 'pi pi-arrow-up text-green-500',
+      acceptLabel: 'ยืนยันการเลื่อนขั้น',
+      rejectLabel: 'ยกเลิก',
+      acceptButtonStyleClass: 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => { this.updateUserRole(user, 'Admin'); }
+    });
+  }
+
+  confirmDemote(user: any) {
+    this.confirmationService.confirm({
+      message: `คุณแน่ใจหรือไม่ที่จะลดขั้น <b>${user.firstName}</b> กลับเป็น User ปกติ?`,
+      header: 'ยืนยันการลดขั้น (Demote)',
+      icon: 'pi pi-arrow-down text-red-500',
+      acceptLabel: 'ยืนยันการลดขั้น',
+      rejectLabel: 'ยกเลิก',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => { this.updateUserRole(user, 'Staff'); }
+    });
+  }
+
+  updateUserRole(user: any, newRole: string) {
+    user.role = newRole; 
+    
+    if (newRole === 'Admin') user.category = 'Admin Management';
+    else if (newRole === 'Staff') user.category = 'Internal';
+    
+    this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนบทบาทเป็น ${newRole} เรียบร้อยแล้ว` });
+    this.applyFilters(); 
   }
 }

@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/proxy-reservations",
+      "destination": "https://unxcjdypaxxztywplqdv.supabase.co/functions/v1/get_user_reservations_admin"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

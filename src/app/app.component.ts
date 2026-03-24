@@ -16,7 +16,7 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { PrimeNG } from 'primeng/config';
 
 // Services
-import { ModalService } from './service/modal.service';
+
 import { UserService, User } from './service/user.service';
 import { filter } from 'rxjs/operators';
 
@@ -62,7 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     public router: Router,
-    private modalService: ModalService,
+  
     private primeng: PrimeNG,
     private userService: UserService
   ) {
@@ -82,28 +82,24 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: 'อาคาร', icon: 'pi pi-building', route: '/buildings' },
       { label: 'จัดการการจอง', icon: 'pi pi-th-large', route: '/reserve' },
       { label: 'จัดการผู้ใช้งาน', icon: 'pi pi-user', route: '/customer' },
-      { label: 'แจ้งเตือน', icon: 'pi pi-comment', route: '/chat' },
       { label: 'Video', icon: 'pi pi-video', route: '/video' }
     ];
 
     this.bottomMenu = [
-      { label: 'Settings', icon: 'pi pi-cog', route: '/fp' },
-      { label: 'Help', icon: 'pi pi-question-circle', route: '/help' }
+      
+      
     ];
 
-    this.modalService.initListener();
+    
 
     this.userService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
 
-    this.userService.checkSession().subscribe({
-      error: () => console.log('User not logged in')
-    });
   }
 
   ngOnDestroy() {
-    this.modalService.ngOnDestroy();
+    
   }
 
   isActive(path: string): boolean {

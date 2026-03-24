@@ -2,156 +2,211 @@
   
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <div *ngFor="let metric of metrics" class="col-12 md:col-6 lg:col-3">
-      <p-card styleClass="border-none shadow-2 border-round-xl h-full" [style]="{'height': '100%'}">
+      <p-card [styleClass]="getMetricCardClass(metric)" [style]="{'height': '100%'}" (click)="filterReservations(metric.title)">
         <div class="flex items-center justify-between">
           <div>
             <span class="block text-gray-500 text-sm font-medium mb-1">{{ metric.title }}</span>
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-bold text-blue-600">{{ metric.value }}</span>
+              <span class="text-3xl font-bold" [ngClass]="getMetricTextClass(metric, 600)">{{ metric.value }}</span>
             </div>
-            <span class="text-xs text-blue-400 mt-1 font-semibold">{{ metric.subtext }}</span>
+            <span class="text-xs mt-1 font-semibold" [ngClass]="getMetricTextClass(metric, 400)">{{ metric.subtext }}</span>
           </div>
-          <div class="w-3rem h-3rem border-round bg-gray-50 flex items-center justify-center border-1 border-gray-100">
-            <i [class]="metric.icon" class="text-xl text-gray-600"></i>
+          <div class="w-3rem h-3rem border-round flex items-center justify-center border-1 border-gray-100" [ngClass]="'bg-' + (metric.color || 'blue') + '-50'">
+            <i [class]="metric.icon" class="text-xl" [ngClass]="getMetricTextClass(metric, 600)"></i>
           </div>
         </div>
       </p-card>
     </div>
   </div>
 
-  <!-- <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-3 border-round-xl shadow-1 border-1 border-gray-100">
-    <div class="flex flex-wrap items-center gap-3">
-      <i class="pi pi-arrow-right-arrow-left text-gray-400 rotate-90 md:rotate-0"></i>
-      
-      <p-calendar [(ngModel)]="selectedDate" dateFormat="dd/mm/yy" placeholder="dd/mm/yyyy" 
-                  [showIcon]="true" styleClass="p-inputtext-sm w-12rem"></p-calendar>
-      
-      <p-dropdown [options]="[]" placeholder="สถานะการจอง" styleClass="p-inputtext-sm w-10rem"></p-dropdown>
-      <p-dropdown [options]="[]" placeholder="อาคาร" styleClass="p-inputtext-sm w-8rem"></p-dropdown>
-      <p-dropdown [options]="[]" placeholder="เรียงตาม" styleClass="p-inputtext-sm w-8rem"></p-dropdown>
-      
-      <p-button label="ตัวกรอง" icon="pi pi-filter" size="small"></p-button>
-    </div>
-  </div> -->
-
-  <div class="bg-white border-round-xl border-1 border-gray-100 shadow-3 overflow-hidden flex flex-column">
+  <div class="bg-white border-round-xl border-1 border-gray-100 shadow-3 overflow-hidden flex flex-column relative">
     
+    <div *ngIf="loading" class="absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center bg-white-alpha-70 z-5">
+        <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+    </div>
+
     <div class="flex flex-wrap items-center justify-between p-4 gap-4 border-bottom-1 border-gray-100">
-      <div class="flex items-center gap-2">
-        <span class="text-blue-600 font-bold text-lg border-bottom-2 border-blue-600 pb-1">รายการการจอง</span>
-        <p-button label="เพิ่มการจองใหม่" icon="pi pi-user-plus" [outlined]="true" size="small" styleClass="text-blue-400 border-blue-400" (click)="showAddModal()"></p-button>
+      <div class="flex items-center gap-4">
+        <span class="text-blue-600 font-bold text-lg border-bottom-2 border-blue-600 pb-1">
+            {{ selectedFilter }}
+        </span>
+        <p-button label="เพิ่มการจองใหม่" icon="pi pi-plus" [outlined]="true" size="small" styleClass="text-blue-500 border-blue-500" (click)="showAddModal()"></p-button>
+        <p-button *ngIf="selectedFilter !== 'รายการจองทั้งหมด'" label="ดูทั้งหมด" icon="pi pi-times" [text]="true" size="small" severity="danger" (click)="filterReservations('รายการจองทั้งหมด')"></p-button>
       </div>
 
-      <p-iconField iconPosition="right">
-        <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
-        <input type="text" pInputText placeholder="ค้นหาผู้ใช้งาน" class="p-inputtext-sm w-15rem" />
-      </p-iconField>
+      <div class="flex gap-2">
+        <p-iconField iconPosition="right">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input #searchInput type="text" pInputText placeholder="ค้นหาผู้ใช้งาน..." class="p-inputtext-sm w-15rem" (input)="dt.filterGlobal(searchInput.value, 'contains')" />
+        </p-iconField>
+      </div>
     </div>
 
-    <p-table 
+    <p-table #dt
       [value]="reservations" 
       [(selection)]="selectedReservations" 
       [paginator]="true" 
       [rows]="10"
+      [globalFilterFields]="['user', 'room', 'invitee', 'type']"
+      (sortFunction)="customSort($event)" [customSort]="true"
       responsiveLayout="scroll"
-      styleClass="p-datatable-sm">
+      styleClass="p-datatable-sm p-datatable-striped">
       
       <ng-template pTemplate="header">
-        <tr class="bg-gray-50 text-gray-600 text-sm">
-          <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+        <tr class="bg-gray-50 text-gray-600 text-sm whitespace-nowrap">
+          <th style="width: 3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
           <th pSortableColumn="user">ผู้ใช้งาน <p-sortIcon field="user"></p-sortIcon></th>
-          <th>วันที่</th>
+          <th pSortableColumn="date">วันที่ <p-sortIcon field="date"></p-sortIcon></th>
           <th>เวลา</th>
-          <th>อาคาร-ห้อง</th>
-          <th>ประเภท</th>
-          <th>ผู้เชิญ</th>
-          <th>สถานะ</th>
-          <th>จัดการ</th>
+          <th pSortableColumn="room">อาคาร-ห้อง <p-sortIcon field="room"></p-sortIcon></th>
+          <th pSortableColumn="type">ประเภท <p-sortIcon field="type"></p-sortIcon></th>
+          <th>ผู้เชิญ/รหัสเชิญ</th>
+          <th pSortableColumn="status">สถานะ <p-sortIcon field="status"></p-sortIcon></th>
+          <th class="text-center">จัดการ</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-res>
-        <tr class="text-sm hover:bg-gray-50 transition-colors border-bottom-1 border-gray-50">
+        <tr class="text-sm hover:bg-gray-50 transition-colors whitespace-nowrap">
           <td><p-tableCheckbox [value]="res"></p-tableCheckbox></td>
           <td>
-            <div class="flex items-center gap-3">
-              <div class="w-2rem h-2rem border-circle bg-gray-100 flex items-center justify-center border-1 border-gray-200">
-                <i class="pi pi-user text-gray-400"></i>
+            <div class="flex align-items-center gap-3">
+              <div class="w-2rem h-2rem border-circle flex align-items-center justify-content-center border-1 border-200"
+                   [ngClass]="res.user !== 'Guest User' ? 'bg-blue-50 text-blue-500' : 'bg-gray-100 text-gray-500'">
+                <i class="pi pi-user"></i>
               </div>
               <div class="flex flex-column">
                 <span class="font-semibold text-gray-800">{{ res.user }}</span>
-                <span class="text-xs text-gray-500">User: {{ res.id }}</span>
+                <span class="text-xs text-500 font-mono">ID: {{ res.id }}</span>
               </div>
             </div>
           </td>
-          <td>{{ res.date }}</td>
-          <td>{{ res.time }}</td>
-          <td>{{ res.room }}</td>
-          <td>{{ res.type }}</td>
-          <td>{{ res.invitee }}</td>
+          <td class="font-medium">{{ res.date }}</td>
+          <td class="text-gray-600">{{ res.time }}</td>
           <td>
-            <p-tag [value]="res.status" [severity]="getSeverity(res.status)" [rounded]="true" styleClass="font-medium px-2 py-1"></p-tag>
+            <span class="font-medium text-gray-700"><i class="pi pi-map-marker text-xs mr-1 text-gray-400"></i>{{ res.room }}</span>
+          </td>
+          <td><span class="text-gray-600">{{ res.type }}</span></td>
+          <td><span class="font-mono text-xs bg-gray-100 px-2 py-1 border-round">{{ res.invitee }}</span></td>
+          <td>
+            <p-tag [value]="res.status" [severity]="getSeverity(res.status)" [rounded]="true"></p-tag>
           </td>
           <td>
-            <div class="flex gap-2">
-              <p-button label="เพิ่มเติม" [link]="true" styleClass="p-0 text-blue-500 text-xs"></p-button>
-              <p-button label="ลบ" [link]="true" styleClass="p-0 text-blue-400 text-xs"></p-button>
-              <p-button label="ดูประวัติ" [link]="true" styleClass="p-0 text-blue-300 text-xs"></p-button>
+            <div class="flex gap-2 align-items-center justify-content-center">
+              
+              <ng-container *ngIf="res.status === 'รออนุมัติ' || res.status === 'จองล่วงหน้า'">
+                <p-button icon="pi pi-check" 
+                          [rounded]="true" [text]="true" severity="success" size="small"
+                          pTooltip="อนุมัติ" tooltipPosition="top"
+                          (click)="confirmUpdateStatus(res, 'อนุมัติแล้ว')"></p-button> 
+                <p-button icon="pi pi-times" 
+                          [rounded]="true" [text]="true" severity="danger" size="small"
+                          pTooltip="ปฏิเสธ" tooltipPosition="top"
+                          (click)="confirmUpdateStatus(res, 'ปฏิเสธ')"></p-button>
+              </ng-container>
+
+              <ng-container *ngIf="res.status === 'อนุมัติแล้ว'">
+                <p-button icon="pi pi-sign-in" 
+                          [rounded]="true" [text]="true" severity="info" size="small"
+                          pTooltip="เช็คอินเข้าพื้นที่" tooltipPosition="top"
+                          (click)="updateStatus(res, 'กำลังใช้งาน')"></p-button>
+              </ng-container>
+
+              <ng-container *ngIf="res.status === 'กำลังใช้งาน'">
+                <p-button icon="pi pi-sign-out" 
+                          [rounded]="true" [text]="true" severity="secondary" size="small"
+                          pTooltip="เช็คเอาท์" tooltipPosition="top"
+                          (click)="updateStatus(res, 'เสร็จสิ้น')"></p-button>
+              </ng-container>
+
+              <p-button icon="pi pi-ellipsis-v" [rounded]="true" [text]="true" severity="secondary" size="small"></p-button>
             </div>
           </td>
         </tr>
       </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+            <td colspan="9" class="text-center p-4 text-500">
+                ไม่พบข้อมูลการจองในหมวดหมู่นี้
+            </td>
+        </tr>
+      </ng-template>
+
     </p-table>
   </div>
 </div>
 
-
-
-
 <p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
-<p-dialog header="เพิ่มการจองใหม่" [(visible)]="displayAddModal" [modal]="true" [style]="{width: '450px'}" [draggable]="false" [resizable]="false">
-    <div class="flex flex-column gap-3 mt-3">
+<p-dialog header="เพิ่มการจองล่วงหน้า" [(visible)]="displayAddModal" [modal]="true" 
+          [style]="{ width: '90vw', maxWidth: '800px' }" 
+          [breakpoints]="{ '960px': '75vw', '641px': '95vw' }"
+          [draggable]="false" [resizable]="false">
+    
+    <div class="flex flex-column gap-4 mt-3 p-2">
         <div class="flex flex-column gap-2">
-            <label class="font-semibold text-sm">ผู้ใช้งาน (Hybrid / External)</label>
-            <p-dropdown [options]="userOptions" [(ngModel)]="newRes.user" placeholder="เลือกผู้ใช้งาน" [filter]="true" filterBy="label" styleClass="w-full"></p-dropdown>
+            <label class="font-semibold text-sm text-gray-700">ผู้ใช้งาน/ผู้มาติดต่อ <span class="text-red-500">*</span></label>
+            <p-dropdown [options]="userOptions" [(ngModel)]="newRes.user" placeholder="ค้นหาหรือเลือกผู้ใช้งาน..." [filter]="true" styleClass="w-full" appendTo="body">
+                <ng-template let-user pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-user text-gray-400"></i>
+                        <span>{{user.label}}</span>
+                    </div>
+                </ng-template>
+            </p-dropdown>
         </div>
         
-        <div class="flex gap-3">
-            <div class="flex flex-column gap-2 w-6">
-                <label class="font-semibold text-sm">วันที่</label>
-                <p-calendar [(ngModel)]="newRes.date" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+        <div class="flex flex-column md:flex-row gap-4">
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">วันที่ใช้งาน <span class="text-red-500">*</span></label>
+                <p-calendar [(ngModel)]="newRes.date" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="เลือกวันที่" styleClass="w-full" appendTo="body"></p-calendar>
             </div>
-            <div class="flex flex-column gap-2 w-6">
-    <label class="font-semibold text-sm">เวลา (เริ่มต้น - สิ้นสุด)</label>
-    <div class="flex align-items-center gap-2">
-        <p-calendar [(ngModel)]="newRes.startTime" [timeOnly]="true" hourFormat="24" 
-                    placeholder="09:00" styleClass="w-full"></p-calendar>
-        <span class="font-bold text-gray-500">-</span>
-        <p-calendar [(ngModel)]="newRes.endTime" [timeOnly]="true" hourFormat="24" 
-                    placeholder="12:00" styleClass="w-full"></p-calendar>
-    </div>
-</div>
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">ช่วงเวลา (เริ่ม - สิ้นสุด) <span class="text-red-500">*</span></label>
+                <div class="flex align-items-center gap-2">
+                    <p-calendar [(ngModel)]="newRes.startTime" [timeOnly]="true" hourFormat="24" placeholder="09:00" styleClass="w-full" appendTo="body"></p-calendar>
+                    <span class="font-bold text-gray-400">-</span>
+                    <p-calendar [(ngModel)]="newRes.endTime" [timeOnly]="true" hourFormat="24" placeholder="12:00" styleClass="w-full" appendTo="body"></p-calendar>
+                </div>
+            </div>
         </div>
 
-        <div class="flex flex-column gap-2">
-            <label class="font-semibold text-sm">อาคาร - ห้อง</label>
-            <input pInputText [(ngModel)]="newRes.room" placeholder="เช่น อาคาร A ห้อง 101" class="w-full" />
+        <div class="flex flex-column md:flex-row gap-4">
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">เลือกอาคาร <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="buildingOptions" [(ngModel)]="newRes.selectedBuilding" placeholder="ระบุอาคาร" (onChange)="onBuildingSelect()" [filter]="true" styleClass="w-full" appendTo="body"></p-dropdown>
+            </div>
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">เลือกห้อง/พื้นที่ <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="roomGroupOptions" [(ngModel)]="newRes.room" [group]="true" placeholder="ระบุห้อง" [disabled]="!newRes.selectedBuilding" styleClass="w-full" appendTo="body">
+                    <ng-template let-group pTemplate="group">
+                        <div class="flex align-items-center text-blue-600 bg-blue-50 px-2 py-1 border-round">
+                            <i class="pi pi-building mr-2"></i>
+                            <span class="font-bold">{{group.label}}</span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+            </div>
         </div>
 
-        <div class="flex gap-3">
-            <div class="flex flex-column gap-2 w-6">
-                <label class="font-semibold text-sm">ประเภท</label>
-                <p-dropdown [options]="typeOptions" [(ngModel)]="newRes.type" appendTo="body" styleClass="w-full"></p-dropdown>
+        <div class="flex flex-column md:flex-row gap-4">
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">ประเภทการเข้าใช้ <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="typeOptions" [(ngModel)]="newRes.type" placeholder="เลือกประเภท" styleClass="w-full" appendTo="body"></p-dropdown>
             </div>
-            <div class="flex flex-column gap-2 w-6">
-                <label class="font-semibold text-sm">ผู้เชิญ / ผู้ติดต่อ</label>
-                <input pInputText [(ngModel)]="newRes.invitee" placeholder="ระบุชื่อผู้เชิญ" class="w-full" />
+            <div class="flex flex-column gap-2 w-full md:w-6">
+                <label class="font-semibold text-sm text-gray-700">ผู้เชิญ / ผู้อนุมัติ (ถ้ามี)</label>
+                <p-dropdown [options]="userOptions" [(ngModel)]="newRes.invitee" placeholder="ระบุชื่อพนักงานที่เชิญ" [filter]="true" styleClass="w-full" appendTo="body"></p-dropdown>
             </div>
         </div>
     </div>
+    
     <ng-template pTemplate="footer">
-        <p-button label="ยกเลิก" icon="pi pi-times" [text]="true" severity="secondary" (click)="displayAddModal = false"></p-button>
-        <p-button label="บันทึก" icon="pi pi-check" (click)="saveReservation()"></p-button>
+        <div class="border-top-1 border-gray-200 pt-3 mt-3 flex justify-content-end gap-2">
+            <p-button label="ยกเลิก" [text]="true" severity="secondary" icon="pi pi-times" (click)="displayAddModal = false"></p-button>
+            <p-button label="บันทึกข้อมูล" icon="pi pi-check" (click)="saveReservation()"></p-button>
+        </div>
     </ng-template>
 </p-dialog>

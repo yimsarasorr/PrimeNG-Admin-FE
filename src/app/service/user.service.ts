@@ -1,139 +1,101 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Router } from '@angular/router';
-import { tap, map, catchError } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, from, throwError, BehaviorSubject } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { SupabaseService } from './supabase.service';
 
-export interface User {
-  id: string;
-  email: string;
-  firstName?: string;
-  first_name?: string;
-  lastName?: string;
-  last_name?: string;
-  role: string;
-  category?: string;
-  status?: string;
-  phone?: string;
-  company?: string;
-  expiryDate?: string | null;
-  registerDate?: string;
-  authMethod?: string;
-  lastActive?: string;
-  [key: string]: any;
-}
+export interface UserMetric { title: string; value: string; subtext: string; }
+export interface UserProfile { id: string; name: string; email: string; phone: string; avatar: string; role: string; created_at: string; joined_date: string; status?: string; }
+export interface UserManagementResponse { metrics: UserMetric[]; profiles: UserProfile[]; }
+export interface User { id: string; email?: string; category?: string; first_name?: string; firstName?: string; last_name?: string; lastName?: string; company?: string; role?: string; status?: string; [key: string]: any; }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class UserService {
-  public supabase: SupabaseClient; 
-  private apiUrl = environment.apiUrl ; // URL ของ NestJS API สำหรับ User
+  private currentUserSubject = new BehaviorSubject<any>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
+  private apiUrl = environment.apiUrl || 'https://fastpassadminapi.vercel.app/api';
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
-
-  constructor(private http: HttpClient, private router: Router) {
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        lock: false
-      }
-    } as any);
-
-    this.handleMagicLinkHash();
-    this.initAuthListener();
-  }
-
-  private async handleMagicLinkHash() {
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token')) {
-      console.log('🔗 ตรวจพบ Magic Link Hash...');
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-
-      if (accessToken) {
-        const { error } = await this.supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        });
-
-        if (!error) {
-          console.log('✅ Set Session สำเร็จ');
-          // ไม่ต้อง Navigate ตรงนี้ก็ได้ เพราะ onAuthStateChange จะทำงานต่อทันที
-        }
-      }
-    }
-  }
-
-  private initAuthListener() {
-    this.supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        // 🔥 จุดที่เพิ่ม 1: สั่ง Sync ข้อมูลลง DB ทันทีที่มี User Session
-        // ข้อมูล Firstname/Lastname ที่แนบมาจะอยู่ใน session.user.user_metadata
-        this.syncUserToDatabase(session.user);
-
-        // จากนั้นค่อยดึง Profile มาแสดงผล
-        this.fetchUserProfile(session.user.email!).subscribe(profile => {
-          this.currentUserSubject.next(profile);
-        });
-
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-           // เช็ค Router URL ปัจจุบันก่อน Redirect เพื่อไม่ให้วนลูป
-           if (this.router.url === '/login' || this.router.url === '/') {
-               this.router.navigate(['/dashboard']);
-           }
-        }
-      } else {
-        this.currentUserSubject.next(null);
-      }
+  constructor(private http: HttpClient, private supabaseService: SupabaseService) {
+    this.supabaseService.supabase.auth.getSession().then(({ data: { session } }) => {
+      this.currentUserSubject.next(session?.user ?? null);
     });
   }
 
-  // 🔥 จุดที่เพิ่ม 2: ฟังก์ชันยิงไปหา Backend
-  private syncUserToDatabase(user: any) {
-    // ส่งข้อมูล User ทั้งก้อน (รวม Metadata) ไปให้ Backend จัดการ
-    this.http.post(`${this.apiUrl}/sync-profile`, { user }).subscribe({
-      next: () => console.log('✅ Database Sync Success: ข้อมูลลงตาราง users แล้ว'),
-      error: (err) => console.error('❌ Database Sync Failed:', err)
-    });
-  }
-
-  // ... (ส่วนอื่นๆ เหมือนเดิม) ...
-  getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/users`);
-  }
-
-  private fetchUserProfile(email: string): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/users/profile`, { email }).pipe(
-      catchError(err => {
-        // Return Mock Data ชั่วคราว (รอ Sync เสร็จ)
-        return of({ 
-          id: '0', 
-          email, 
-          role: 'User',
-          firstName: 'Loading...', 
-          lastName: '' 
-        } as User);
+  private getHeaders(): Observable<HttpHeaders> {
+    return from(this.supabaseService.getAuthToken()).pipe(
+      map(token => {
+        let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+        if (token) headers = headers.set('Authorization', `Bearer ${token}`);
+        return headers;
       })
     );
   }
 
+  getProfiles(): Observable<UserManagementResponse> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.get<any[]>(`${this.apiUrl}/users`, { headers })),
+      map(users => this.transformToUserManagementResponse(users)),
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  getUsers(): Observable<any[]> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.get<any[]>(`${this.apiUrl}/users`, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  updateUserStatus(userId: string, status: string): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.put(`${this.apiUrl}/users/${userId}/status`, { status }, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  updateUserRole(userId: string, role: string): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.put(`${this.apiUrl}/users/${userId}/role`, { role }, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
   checkSession(): Observable<any> {
-    return from(this.supabase.auth.getSession());
+    return from(this.supabaseService.supabase.auth.getSession());
   }
 
   logout(): Observable<any> {
-    return from(this.supabase.auth.signOut()).pipe(
-        tap(() => this.currentUserSubject.next(null)) 
-    );
+    return from(this.supabaseService.supabase.auth.signOut().then(() => {
+      this.currentUserSubject.next(null);
+    }));
   }
-  updateUserRole(userId: string, role: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/users/${userId}/role`, { role });
+
+  private transformToUserManagementResponse(users: any[]): UserManagementResponse {
+    const total = users.length;
+    const active = users.filter(u => u.status === 'Active').length;
+    const blacklist = users.filter(u => u.status === 'Blacklist').length;
+    const admins = users.filter(u => u.role?.toLowerCase().includes('admin')).length;
+
+    const metrics: UserMetric[] = [
+      { title: 'ผู้ใช้งานทั้งหมด', value: total.toString(), subtext: 'Total Users' },
+      { title: 'ผู้ดูแลระบบ', value: admins.toString(), subtext: 'Admins' },
+      { title: 'ใช้งานปกติ', value: active.toString(), subtext: 'Active Users' },
+      { title: 'ระงับการใช้งาน', value: blacklist.toString(), subtext: 'Blacklisted' }
+    ];
+
+    const profiles: UserProfile[] = users.map(u => ({
+      id: u.id,
+      name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
+      email: u.email,
+      phone: u.phone,
+      avatar: u.avatar_url,
+      role: u.role,
+      created_at: u.created_at,
+      joined_date: u.register_date || u.created_at,
+      status: u.status
+    }));
+
+    return { metrics, profiles };
   }
 }
