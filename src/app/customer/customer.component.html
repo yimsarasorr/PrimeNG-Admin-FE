@@ -92,9 +92,6 @@
         </div>
     </div>
 
-    <!-- <div class="w-full bg-white p-3 border-round-xl shadow-1 border-1 border-100 flex flex-column md:flex-row flex-wrap align-items-center justify-content-between gap-3">
-        </div> -->
-
     <div class="surface-card border-round-xl shadow-3 overflow-hidden">
         
         <div class="flex flex-column md:flex-row align-items-center justify-content-between p-3 md:p-4 border-bottom-1 border-100 bg-white gap-3">
@@ -104,26 +101,25 @@
                       [class.text-red-600]="selectedCategory === 'Admin Management'">
                     {{ selectedCategory }} List
                 </span>
-                <p-button *ngIf="selectedCategory !== 'Admin Management'" label="เพิ่ม" icon="pi pi-user-plus" [outlined]="true" size="small"></p-button>
+                <p-button *ngIf="selectedCategory !== 'Admin Management'" label="เชิญผู้ใช้งาน" icon="pi pi-envelope" [outlined]="true" size="small" (click)="openInviteModal()"></p-button>
             </div>
-            <span class="p-input-icon-left w-full md:w-auto">
-                <i class="pi pi-search"></i>
-                <input type="text" pInputText placeholder="ค้นหา..." class="p-inputtext-sm w-full md:w-20rem" />
-            </span>
+            <p-iconField iconPosition="right" class="w-full md:w-auto">
+                <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+                <input #searchInput type="text" pInputText placeholder="ค้นหา..." class="p-inputtext-sm w-full md:w-20rem" (input)="dt.filterGlobal(searchInput.value, 'contains')" />
+            </p-iconField>
         </div>
 
-        <p-table [value]="filteredUsers" [(selection)]="selectedUsers" [paginator]="true" [rows]="10" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped">
+        <p-table #dt [value]="filteredUsers" [(selection)]="selectedUsers" [paginator]="true" [rows]="10" responsiveLayout="scroll" styleClass="p-datatable-sm p-datatable-striped" [globalFilterFields]="['name', 'email', 'phone']">
             <ng-template pTemplate="header">
                 <tr class="text-sm text-600 bg-gray-50 whitespace-nowrap">
                     <th style="width: 3rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                    <th>ข้อมูลส่วนตัว</th>
+                    <th pSortableColumn="name">ข้อมูลส่วนตัว <p-sortIcon field="name"></p-sortIcon></th>
                     <th>บริษัท</th>
-                    <th>บทบาท</th>
-                    <th class=" md:table-cell">วิธีการลงทะเบียน</th>
-                    <th class="hiddenmd:table-cell">วันที่ลงทะเบียน</th>
+                    <th pSortableColumn="role">บทบาท <p-sortIcon field="role"></p-sortIcon></th>
+                    <th class="md:table-cell">วิธีการลงทะเบียน</th>
+                    <th class="md:table-cell" pSortableColumn="registerDate">วันที่ลงทะเบียน <p-sortIcon field="registerDate"></p-sortIcon></th>
                     <th class="md:table-cell">สิทธิ์ถึง</th> 
-                    <th>สถานะ</th>
-                    <th class="hidden md:table-cell">ใช้งานล่าสุด</th>
+                    <th pSortableColumn="status">สถานะ <p-sortIcon field="status"></p-sortIcon></th>
                     <th>จัดการ</th>
                 </tr>
             </ng-template>
@@ -133,16 +129,15 @@
                     <td><p-tableCheckbox [value]="user"></p-tableCheckbox></td>
                     <td>
                         <div class="flex align-items-center gap-2">
-                        <p-avatar icon="pi pi-user" shape="circle" 
+                        <p-avatar [icon]="user.avatar ? undefined : 'pi pi-user'" [image]="user.avatar" shape="circle" 
                                     [styleClass]="user.category === 'Internal' ? 'bg-indigo-50 text-indigo-500' : 
                                                   user.category === 'Hybrid' ? 'bg-purple-50 text-purple-500' : 
                                                   'bg-orange-50 text-orange-500'">
                         </p-avatar>
                         <div class="flex flex-column">
-                            <span class="font-semibold text-800">{{user.first_name || user.firstName}} {{user.last_name || user.lastName}}</span>
-                            <div class="flex align-items-center gap-2 text-xs text-500">
-                                <span><i class="pi pi-phone mr-1"></i>{{user.phone || '-'}}</span>
-                                <span *ngIf="user.email" class="hidden lg:inline">| {{user.email}}</span>
+                            <span class="font-semibold text-800">{{ user.name }}</span> <div class="flex align-items-center gap-2 text-xs text-500">
+                                <span><i class="pi pi-phone mr-1"></i>{{ user.phone }}</span>
+                                <span *ngIf="user.email" class="hidden lg:inline">| {{ user.email }}</span>
                             </div>
                         </div>
                         </div>
@@ -187,7 +182,6 @@
                     <td>
                         <span [ngClass]="getStatusColor(user.status)">{{user.status}}</span>
                     </td>
-                    <td class="text-500 text-xs hidden md:table-cell">{{user.lastActive}}</td>
 
                     <td>
                         <div class="flex gap-1">
@@ -210,13 +204,13 @@
                             </ng-container>
 
                             <ng-container *ngIf="selectedCategory === 'Admin Management'">
-                                <p-button *ngIf="user.role !== 'Admin'" 
+                                <p-button *ngIf="!user.role?.toLowerCase().includes('admin')" 
                                           icon="pi pi-arrow-up" label="Promote" 
                                           pTooltip="เลื่อนขั้นเป็น Admin" tooltipPosition="left"
                                           [outlined]="true" [rounded]="true" severity="success" size="small"
                                           (onClick)="confirmPromote(user)"> </p-button>
 
-                                <p-button *ngIf="user.role === 'Admin'" 
+                                <p-button *ngIf="user.role?.toLowerCase().includes('admin') || user.role === 'host'" 
                                           icon="pi pi-arrow-down" label="Demote" 
                                           pTooltip="ลดขั้นเป็น User" tooltipPosition="left"
                                           [outlined]="true" [rounded]="true" severity="danger" size="small"
@@ -226,10 +220,50 @@
                     </td>
                 </tr>
             </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="9" class="text-center p-4 text-500">
+                        ไม่พบข้อมูลผู้ใช้งาน
+                    </td>
+                </tr>
+            </ng-template>
         </p-table>
     </div>
   </div>
 </div>
+
+<p-dialog header="ส่งคำเชิญ (Magic Link Invite)" [(visible)]="displayInviteModal" [modal]="true" [style]="{width: '500px'}" [draggable]="false" [resizable]="false">
+    <div class="flex flex-column gap-4 mt-3">
+        
+        <div class="flex flex-column gap-2">
+            <label class="font-semibold text-sm text-gray-700">ชื่อ - นามสกุล <span class="text-red-500">*</span></label>
+            <input pInputText [(ngModel)]="inviteForm.name" placeholder="เช่น Somchai Jaidee" class="w-full" />
+        </div>
+
+        <div class="flex flex-column gap-2">
+            <label class="font-semibold text-sm text-gray-700">อีเมล (รับ Magic Link) <span class="text-red-500">*</span></label>
+            <div class="p-inputgroup">
+                <span class="p-inputgroup-addon"><i class="pi pi-envelope"></i></span>
+                <input pInputText [(ngModel)]="inviteForm.email" placeholder="example@domain.com" class="w-full" />
+            </div>
+            <small class="text-500">ระบบจะส่งลิงก์เข้าสู่ระบบอัตโนมัติไปยังอีเมลนี้</small>
+        </div>
+
+        <div class="flex flex-column gap-2">
+            <label class="font-semibold text-sm text-gray-700">บทบาทเริ่มต้น (Role)</label>
+            <p-dropdown [options]="roleOptions" [(ngModel)]="inviteForm.role" appendTo="body" styleClass="w-full"></p-dropdown>
+        </div>
+
+    </div>
+    
+    <ng-template pTemplate="footer">
+        <div class="border-top-1 border-gray-200 pt-3 mt-3 flex justify-content-end gap-2">
+            <p-button label="ยกเลิก" [text]="true" severity="secondary" icon="pi pi-times" (click)="displayInviteModal = false"></p-button>
+            <p-button label="ส่งคำเชิญ" icon="pi pi-send" (click)="sendInvite()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
 
 <p-toast></p-toast>
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>

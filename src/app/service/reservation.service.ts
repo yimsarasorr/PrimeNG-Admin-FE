@@ -48,4 +48,11 @@ export class ReservationService {
       catchError(err => throwError(() => err))
     );
   }
+  getDoorAccess(): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.get<any>(`${this.apiUrl}/reservations/dooraccess`, { headers })),
+      catchError(err => throwError(() => err))
+    );
+  }
+
 }
