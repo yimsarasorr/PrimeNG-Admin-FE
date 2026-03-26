@@ -19,8 +19,10 @@ import { BadgeModule } from 'primeng/badge';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import {DialogModule} from 'primeng/dialog';
 
 import { UserService } from '../service/user.service'; 
+import { Dialog } from 'primeng/dialog';
 
 @Component({
   selector: 'app-customer',
@@ -30,7 +32,7 @@ import { UserService } from '../service/user.service';
     TableModule, ButtonModule, CardModule, DropdownModule, 
     CalendarModule, InputTextModule, IconFieldModule, InputIconModule, 
     AvatarModule, TagModule, TooltipModule, BadgeModule,
-    ConfirmDialogModule, ToastModule 
+    ConfirmDialogModule, ToastModule , DialogModule
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './customer.component.html',
@@ -44,7 +46,6 @@ export class CustomerComponent implements OnInit {
   selectedCategory: string = 'All';
   selectedUsers: any[] = []; 
   
-  // ✅ ประกาศตัวแปรแค่ครั้งเดียวเท่านั้น!
   users: any[] = [];
   filteredUsers: any[] = [];
   metrics: any[] = [];
@@ -59,14 +60,11 @@ export class CustomerComponent implements OnInit {
     this.loadUsers();
   }
 
-
   loadUsers() {
     this.userService.getProfiles().subscribe({
       next: (res: any) => { 
-        // ✅ ไม่ต้องเช็ค res.success แล้ว แค่มีข้อมูล res ส่งมาก็พอ
         if (res) { 
           
-          // 1️⃣ จัดการ Metrics
           this.metrics = (res.metrics || []).map((m: any) => {
             let icon = 'pi pi-users';
             if (m.title === 'ผู้ดูแลระบบ') icon = 'pi pi-shield text-red-500';
@@ -74,33 +72,33 @@ export class CustomerComponent implements OnInit {
             return { ...m, icon };
           });
 
-          // 2️⃣ จัดการ Profiles เข้าตาราง
           this.users = (res.profiles || []).map((p: any) => {
             let cat = 'External';
-            if (p.role === 'Admin' || p.role === 'Super Admin') cat = 'Admin Management';
-            else if (p.role === 'Staff' || p.role === 'Employee') cat = 'Internal';
-            else if (p.role === 'Partner' || p.role === 'Hybrid Tech') cat = 'Hybrid';
+            const roleLower = (p.role || '').toLowerCase();
+            
+            if (roleLower.includes('admin') || roleLower === 'host') cat = 'Admin Management';
+            else if (roleLower === 'staff' || roleLower === 'employee') cat = 'Internal';
+            else if (roleLower === 'partner' || roleLower === 'hybrid tech') cat = 'Hybrid';
 
             return {
               id: p.id,
-              firstName: p.name || '-', 
-              lastName: '',
+              // 🚀 รวม first_name, last_name เป็น name หรือ fallback ด้วย email ถ้าเพื่อนไม่มีข้อมูล
+              name: p.name || p.email || 'Unknown User', 
               email: p.email,
               phone: p.phone || '-',
-              role: p.role || 'Guest',
+              role: p.role || 'User',
               category: cat,
-              company: '-', 
-              authMethod: 'Email', 
-              registerDate: p.joined_date, 
+              company: p.company || '-', // DB เพื่อนไม่มี company ใส่ - ไว้ก่อน
+              authMethod: p.line_id ? 'LINE OA' : 'Email', // ถ้ามี line_id ตีความว่าล็อกอินผ่านไลน์
+              registerDate: p.created_at || p.joined_date, // 🚀 ใช้ created_at
               expiryDate: null, 
-              status: p.status || 'Active', // ✅ ใช้สถานะจาก DB
+              status: p.status || 'Active', 
               avatar: p.avatar,
               _raw: p 
             };
           });
 
-          this.applyFilters(); // อัปเดตตารางให้แสดงผล
-
+          this.applyFilters(); 
         }
       },
       error: (err: any) => {
@@ -110,7 +108,6 @@ export class CustomerComponent implements OnInit {
     });
   }
 
-  // ✅ ระบบ Filter 
   setCategory(category: string) {
     this.selectedCategory = category;
     this.applyFilters();
@@ -120,40 +117,37 @@ export class CustomerComponent implements OnInit {
     if (this.selectedCategory === 'All') {
       this.filteredUsers = [...this.users];
     } else if (this.selectedCategory === 'Admin Management') {
-      this.filteredUsers = this.users.filter(user => user.role === 'Admin' || user.role === 'Super Admin');
+      this.filteredUsers = this.users.filter(user => {
+        const r = (user.role || '').toLowerCase();
+        return r.includes('admin') || r === 'host';
+      });
     } else {
       this.filteredUsers = this.users.filter(user => user.category === this.selectedCategory);
     }
   }
 
-  // ✅ ฟังก์ชันคำนวณตัวเลข (มีแค่ที่เดียว)
   getCount(category: string): number {
     if (category === 'All') return this.users.length;
     return this.users.filter(u => u.category === category).length;
   }
 
   getAdminCount(): number {
-    return this.users.filter(u => u.role === 'Admin' || u.role === 'Super Admin').length;
+    return this.users.filter(user => {
+      const r = (user.role || '').toLowerCase();
+      return r.includes('admin') || r === 'host';
+    }).length;
   }
 
-  // =====================================
-  // ส่วน UI Helpers (ไอคอน, สีสถานะ ฯลฯ)
-  // =====================================
   getRoleSeverity(role: string): "success" | "info" | "warning" | "danger" | "secondary" | "contrast" | undefined {
-    switch (role) {
-      case 'Super Admin': 
-      case 'Admin': return 'primary' as any;
-      case 'Security': return 'contrast';
-      case 'Staff':
-      case 'Employee': return 'info';
-      case 'Hybrid Tech': 
-      case 'Partner': return undefined; 
-      case 'Technician': 
-      case 'Contractor': return 'warning';
-      case 'Messenger': return 'secondary';
-      case 'Guest': return 'success';
-      default: return 'secondary';
-    }
+    const r = (role || '').toLowerCase();
+    if (r.includes('admin') || r === 'host') return 'primary' as any;
+    if (r === 'security') return 'contrast';
+    if (r === 'staff' || r === 'employee') return 'info';
+    if (r === 'hybrid tech' || r === 'partner') return undefined; 
+    if (r === 'technician' || r === 'contractor') return 'warning';
+    if (r === 'messenger') return 'secondary';
+    if (r === 'guest') return 'success';
+    return 'secondary';
   }
 
   getAuthIcon(method: string | null): string {
@@ -170,17 +164,17 @@ export class CustomerComponent implements OnInit {
     if (!method || method.toLowerCase() === 'guest') return 'Guest User';
     const m = method.toLowerCase();
     if (m.includes('line')) return 'LINE OA';
-    if (m.includes('magic') || m.includes('email')) return 'Magic Link';
+    if (m.includes('magic') || m.includes('email')) return 'Email';
     return method; 
   }
 
   getStatusColor(status: string): string {
-    switch(status) {
-        case 'Active': return 'text-green-600 font-bold';
-        case 'Checked In': return 'text-blue-600 font-bold';
-        case 'Checked Out': return 'text-gray-500';
-        case 'Pending': return 'text-orange-500 font-bold';
-        case 'Blacklist': return 'text-red-600 font-bold line-through';
+    switch(status?.toLowerCase()) {
+        case 'active': return 'text-green-600 font-bold';
+        case 'checked in': return 'text-blue-600 font-bold';
+        case 'checked out': return 'text-gray-500';
+        case 'pending': return 'text-orange-500 font-bold';
+        case 'blacklist': return 'text-red-600 font-bold line-through';
         default: return 'text-gray-700';
     }
   }
@@ -193,9 +187,6 @@ export class CustomerComponent implements OnInit {
     return exp < today;
   }
 
-  // =====================================
-  // ระบบจัดการ (Ban, Promote, Demote)
-  // =====================================
   toggleBlacklist(user: any) {
     const isCurrentlyBlacklisted = user.status === 'Blacklist';
     const newStatus = isCurrentlyBlacklisted ? 'Active' : 'Blacklist';
@@ -204,7 +195,7 @@ export class CustomerComponent implements OnInit {
     const buttonClass = isCurrentlyBlacklisted ? 'p-button-success' : 'p-button-danger';
 
     this.confirmationService.confirm({
-      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> ผู้ใช้งาน <b>${user.firstName || user.email}</b> ?`,
+      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> ผู้ใช้งาน <b>${user.name}</b> ?`,
       header: `ยืนยันการ${actionText}`,
       icon: iconClass,
       acceptLabel: 'ยืนยัน',
@@ -212,18 +203,24 @@ export class CustomerComponent implements OnInit {
       acceptButtonStyleClass: buttonClass,
       rejectButtonStyleClass: "p-button-text p-button-secondary",
       accept: () => {
-        user.status = newStatus;
-        if (newStatus === 'Blacklist') user.category = 'Blacklist'; 
-        
-        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `ดำเนินการ${actionText}เรียบร้อยแล้ว` });
-        this.applyFilters();
+        this.userService.updateUserStatus(user.id, newStatus).subscribe({
+          next: () => {
+            user.status = newStatus;
+            if (newStatus === 'Blacklist') user.category = 'Blacklist'; 
+            this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `ดำเนินการ${actionText}เรียบร้อยแล้ว` });
+            this.applyFilters();
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'โปรดเพิ่มคอลัมน์ status ในตาราง profiles ของฐานข้อมูลเพื่อน' });
+          }
+        });
       }
     });
   }
 
   confirmPromote(user: any) {
     this.confirmationService.confirm({
-      message: `คุณแน่ใจหรือไม่ที่จะเลื่อนขั้น <b>${user.firstName}</b> เป็น Admin?`,
+      message: `คุณแน่ใจหรือไม่ที่จะเลื่อนขั้น <b>${user.name}</b> เป็น Admin?`,
       header: 'ยืนยันการเลื่อนขั้น (Promote)',
       icon: 'pi pi-arrow-up text-green-500',
       acceptLabel: 'ยืนยันการเลื่อนขั้น',
@@ -236,24 +233,65 @@ export class CustomerComponent implements OnInit {
 
   confirmDemote(user: any) {
     this.confirmationService.confirm({
-      message: `คุณแน่ใจหรือไม่ที่จะลดขั้น <b>${user.firstName}</b> กลับเป็น User ปกติ?`,
+      message: `คุณแน่ใจหรือไม่ที่จะลดขั้น <b>${user.name}</b> กลับเป็น User ปกติ?`,
       header: 'ยืนยันการลดขั้น (Demote)',
       icon: 'pi pi-arrow-down text-red-500',
       acceptLabel: 'ยืนยันการลดขั้น',
       rejectLabel: 'ยกเลิก',
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text p-button-secondary',
-      accept: () => { this.updateUserRole(user, 'Staff'); }
+      accept: () => { this.updateUserRole(user, 'User'); }
     });
   }
 
   updateUserRole(user: any, newRole: string) {
-    user.role = newRole; 
-    
-    if (newRole === 'Admin') user.category = 'Admin Management';
-    else if (newRole === 'Staff') user.category = 'Internal';
-    
-    this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนบทบาทเป็น ${newRole} เรียบร้อยแล้ว` });
-    this.applyFilters(); 
+    this.userService.updateUserRole(user.id, newRole).subscribe({
+      next: () => {
+        user.role = newRole; 
+        if (newRole === 'Admin') user.category = 'Admin Management';
+        else if (newRole === 'User' || newRole === 'Staff') user.category = 'Internal';
+        
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนบทบาทเป็น ${newRole} เรียบร้อยแล้ว` });
+        this.applyFilters(); 
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถเปลี่ยนสิทธิ์ได้' });
+      }
+    });
   }
+
+  // --- ตัวแปรใหม่สำหรับ Modal คำเชิญ ---
+  displayInviteModal: boolean = false;
+  inviteForm = { email: '', name: '', role: 'User' };
+  roleOptions = [
+    { label: 'ผู้ใช้งานทั่วไป (User)', value: 'User' },
+    { label: 'พนักงาน (Staff)', value: 'Staff' },
+    { label: 'ผู้ดูแลระบบ (Admin)', value: 'Admin' }
+  ];
+
+  openInviteModal() {
+    this.inviteForm = { email: '', name: '', role: 'User' };
+    this.displayInviteModal = true;
+  }
+
+  sendInvite() {
+    if (!this.inviteForm.email || !this.inviteForm.name) {
+      this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'กรุณากรอกชื่อและอีเมลให้ครบถ้วน' });
+      return;
+    }
+
+    this.userService.inviteUser(this.inviteForm).subscribe({
+      next: (res) => {
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: res.message });
+        this.displayInviteModal = false;
+        this.loadUsers(); // โหลดตารางใหม่
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถส่งคำเชิญได้ โปรดตรวจสอบอีเมล' });
+      }
+    });
+  }
+  
+
 }

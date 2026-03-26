@@ -35,7 +35,8 @@ export class UserService {
   getProfiles(): Observable<UserManagementResponse> {
     return this.getHeaders().pipe(
       switchMap(headers => this.http.get<any[]>(`${this.apiUrl}/users`, { headers })),
-      map(users => this.transformToUserManagementResponse(users)),
+      // 🚀 ป้องกัน Error หน้าขาวโล่งด้วยการดัก (users || []) ในกรณีที่ Backend โยน null กลับมา
+      map(users => this.transformToUserManagementResponse(users || [])),
       catchError(err => throwError(() => err))
     );
   }
@@ -71,11 +72,14 @@ export class UserService {
     }));
   }
 
+  // 🚀 ฟังก์ชันจัดเรียงและแมปข้อมูลให้เข้ากับตาราง Profiles ของเพื่อน
   private transformToUserManagementResponse(users: any[]): UserManagementResponse {
     const total = users.length;
-    const active = users.filter(u => u.status === 'Active').length;
+    // ดัก status ให้เป็น Active ถ้าไม่มีข้อมูล
+    const active = users.filter(u => !u.status || u.status === 'Active').length;
     const blacklist = users.filter(u => u.status === 'Blacklist').length;
-    const admins = users.filter(u => u.role?.toLowerCase().includes('admin')).length;
+    // เพิ่มการนับ role แบบ 'host' ให้เป็น Admin ด้วย
+    const admins = users.filter(u => u.role?.toLowerCase().includes('admin') || u.role === 'host').length;
 
     const metrics: UserMetric[] = [
       { title: 'ผู้ใช้งานทั้งหมด', value: total.toString(), subtext: 'Total Users' },
@@ -86,16 +90,27 @@ export class UserService {
 
     const profiles: UserProfile[] = users.map(u => ({
       id: u.id,
-      name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
+      // 🚀 ใช้คอลัมน์ name โดยตรง หรือใช้อีเมลถ้าไม่มีชื่อ
+      name: u.name || u.email || 'Unknown User',
       email: u.email,
       phone: u.phone,
-      avatar: u.avatar_url,
+      // 🚀 ใช้คอลัมน์ avatar ตามตารางเพื่อน
+      avatar: u.avatar,
       role: u.role,
       created_at: u.created_at,
-      joined_date: u.register_date || u.created_at,
-      status: u.status
+      // 🚀 ใช้ created_at เป็นวันที่สมัครแทน
+      joined_date: u.created_at,
+      // 🚀 ป้องกัน Error หน้าตารางพัง ถ้าเพื่อนไม่ได้สร้างคอลัมน์ status ใน DB
+      status: u.status || 'Active'
     }));
 
     return { metrics, profiles };
+  }
+
+  inviteUser(data: { email: string, name: string, role: string }): Observable<any> {
+    return this.getHeaders().pipe(
+      switchMap(headers => this.http.post(`${this.apiUrl}/users/invite`, data, { headers })),
+      catchError(err => throwError(() => err))
+    );
   }
 }

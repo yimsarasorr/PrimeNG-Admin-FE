@@ -18,19 +18,20 @@ import { ToastModule } from 'primeng/toast';
 import { ChipsModule } from 'primeng/chips';
 import { CalendarModule } from 'primeng/calendar';
 import { DividerModule } from 'primeng/divider';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { BuildingService } from '../service/building.service';
 
 @Component({
-  selector: 'app-buiding',
+  selector: 'app-inbox',
   standalone: true,
   imports: [
     CommonModule, FormsModule, HttpClientModule,
     TableModule, ButtonModule, InputTextModule, TagModule,
     CheckboxModule, CardModule, DropdownModule, IconFieldModule,
     InputIconModule, DialogModule, ConfirmDialogModule, ToastModule,
-    ChipsModule, CalendarModule, DividerModule
+    ChipsModule, CalendarModule, DividerModule, MultiSelectModule
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './inbox.component.html',
@@ -44,21 +45,35 @@ export class InboxComponent implements OnInit {
   displayModal: boolean = false;
   isEditMode: boolean = false;
 
-  // ✅ 1. แก้ไข Type ของ rooms ให้เป็น Object ที่เก็บ name และ status
   buildingForm = { 
-    id: '', name: '', detail: '', zone: 'Zone A', 
+    id: '', 
+    name: '', 
+    detail: '', 
+    zone: 'building', 
+    lat: 13.727679 as number | null,
+    lng: 100.772299 as number | null,
     openTimeObj: null as Date | null,
     closeTimeObj: null as Date | null,
+    allowed_user_types: [] as string[],
     floors: [] as { floorName: string, rooms: { name: string, status: string }[] }[]
   };
 
-  zoneOptions = [{ label: 'Zone A', value: 'Zone A' }, { label: 'Zone B', value: 'Zone B' }, { label: 'Zone C', value: 'Zone C' }];
+  zoneOptions = [
+    { label: 'อาคาร/สำนักงาน (Building)', value: 'building' }, 
+    { label: 'สิ่งอำนวยความสะดวก (Facility)', value: 'facility' }, 
+    { label: 'ลานจอดรถ (Parking)', value: 'parking' }
+  ];
 
-  // ✅ 2. เพิ่มตัวเลือกสถานะห้อง
   roomStatusOptions = [
     { label: 'ว่าง (Available)', value: 'ว่าง' },
     { label: 'ปรับปรุง (Maintenance)', value: 'ปรับปรุง' },
     { label: 'ไม่พร้อมใช้งาน (Closed)', value: 'ไม่พร้อมใช้งาน' }
+  ];
+
+  userTypeOptions = [
+    { label: 'นักศึกษา (นศ.)', value: 'นศ.' },
+    { label: 'บุคลากร', value: 'บุคลากร' },
+    { label: 'บุคคลภายนอก', value: 'บุคคลภายนอก' }
   ];
 
   constructor(
@@ -97,8 +112,8 @@ export class InboxComponent implements OnInit {
     const todayBookings = data.reduce((sum, b) => sum + (b.bookings || 0), 0);
 
     this.metrics = [
-      { title: 'อาคารทั้งหมด', value: data.length.toString(), icon: 'pi pi-map-marker' },
-      { title: 'จำนวนห้องทั้งหมด', value: totalRooms.toString(), icon: 'pi pi-home' },
+      { title: 'สถานที่ทั้งหมด', value: data.length.toString(), icon: 'pi pi-map-marker' },
+      { title: 'จำนวนห้อง/พื้นที่ทั้งหมด', value: totalRooms.toString(), icon: 'pi pi-home' },
       { title: 'ผู้มาเยี่ยมในขณะนี้', value: currentVisitors.toString(), icon: 'pi pi-users' },
       { title: 'การจองทั้งหมดในวันนี้', value: todayBookings.toString(), icon: 'pi pi-calendar' }
     ];
@@ -107,8 +122,10 @@ export class InboxComponent implements OnInit {
   openAddModal() {
     this.isEditMode = false;
     this.buildingForm = { 
-      id: '', name: '', detail: '', zone: 'Zone A', 
+      id: '', name: '', detail: '', zone: 'building', 
+      lat: 13.727679, lng: 100.772299,
       openTimeObj: null, closeTimeObj: null, 
+      allowed_user_types: ['นศ.', 'บุคลากร'],
       floors: [{ floorName: 'ชั้น 1', rooms: [] }] 
     };
     this.displayModal = true;
@@ -129,7 +146,6 @@ export class InboxComponent implements OnInit {
       cTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
     }
 
-    // ✅ 3. ดักจับและแปลงข้อมูลห้องจาก String ให้กลายเป็น Object
     const mappedFloors = (building.floors || []).map((f: any) => {
       return {
         floorName: f.floorName,
@@ -139,11 +155,23 @@ export class InboxComponent implements OnInit {
       };
     });
 
+    let parsedUserTypes = [];
+    try {
+      parsedUserTypes = typeof building.allowed_user_types === 'string' 
+        ? JSON.parse(building.allowed_user_types) 
+        : (building.allowed_user_types || []);
+    } catch (e) {
+      parsedUserTypes = [];
+    }
+
     this.buildingForm = { 
       ...building,
+      lat: building.lat || 13.727679,
+      lng: building.lng || 100.772299,
       openTimeObj: oTime,
       closeTimeObj: cTime,
-      floors: mappedFloors // ✅ โยน floors ที่แปลงแล้วเข้าไป
+      allowed_user_types: parsedUserTypes,
+      floors: mappedFloors 
     };
     this.displayModal = true;
   }
@@ -156,7 +184,6 @@ export class InboxComponent implements OnInit {
     this.buildingForm.floors.splice(index, 1);
   }
 
-  // ✅ 4. เพิ่มฟังก์ชันจัดการห้อง
   addRoom(floorIndex: number, roomName: string) {
     if (roomName && roomName.trim() !== '') {
       this.buildingForm.floors[floorIndex].rooms.push({ name: roomName.trim(), status: 'ว่าง' });
@@ -168,8 +195,8 @@ export class InboxComponent implements OnInit {
   }
 
   saveBuilding() {
-    if (!this.buildingForm.name || !this.buildingForm.openTimeObj || !this.buildingForm.closeTimeObj) {
-      this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'กรุณากรอกชื่อและเวลาทำการให้ครบ' });
+    if (!this.buildingForm.id || !this.buildingForm.name || !this.buildingForm.openTimeObj || !this.buildingForm.closeTimeObj) {
+      this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'กรุณากรอกรหัสอาคาร ชื่อ และเวลาทำการให้ครบ' });
       return;
     }
 
@@ -194,18 +221,18 @@ export class InboxComponent implements OnInit {
     } else {
       this.buildingService.createBuilding(payload).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: 'เพิ่มอาคารสำเร็จ' });
+          this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: 'เพิ่มสถานที่สำเร็จ' });
           this.displayModal = false;
           this.loadBuildings();
         },
-        error: () => this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถบันทึกได้' })
+        error: () => this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถบันทึกได้ รหัสสถานที่อาจซ้ำ' })
       });
     }
   }
 
   deleteBuilding(building: any) {
     this.confirmationService.confirm({
-      message: `คุณต้องการลบอาคาร <b>${building.name}</b> ใช่หรือไม่?`,
+      message: `คุณต้องการลบอาคาร/สถานที่ <b>${building.name}</b> ใช่หรือไม่?`,
       header: 'ยืนยันการลบ',
       icon: 'pi pi-exclamation-triangle text-red-500',
       acceptButtonStyleClass: 'p-button-danger',

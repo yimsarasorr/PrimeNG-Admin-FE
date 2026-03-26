@@ -27,7 +27,6 @@ import { ReservationService } from '../service/reservation.service';
 import { UserService } from '../service/user.service'; 
 import { BuildingService } from '../service/building.service'; 
 
-// 🚀 แก้ไขจุดที่ 1 และ 2: Import SupabaseClient และ createClient เข้ามาให้ถูกต้อง
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Component({
@@ -46,7 +45,6 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 })
 export class CardComponent implements OnInit, OnDestroy {
   
-  // ✅ เก็บ Supabase ไว้สำหรับการทำ Realtime Subscription เท่านั้น
   private supabase: SupabaseClient;
   realtimeChannel: any;
 
@@ -63,8 +61,8 @@ export class CardComponent implements OnInit, OnDestroy {
   displayAddModal: boolean = false;
   loading: boolean = false;
   
-  // สำหรับ Filter ในหน้าตาราง
-  selectedFilter: string = 'รายการจองทั้งหมด';
+  // ✅ เปลี่ยน Default Filter เป็นคำว่าตั๋ว
+  selectedFilter: string = 'ตั๋วเข้าออกทั้งหมด';
   selectedDate: Date | undefined;
   
   newRes: any = {
@@ -75,14 +73,15 @@ export class CardComponent implements OnInit, OnDestroy {
     time: '', 
     selectedBuilding: null,
     room: null,
-    type: 'Meeting',
+    type: 'Visitor', // ✅ เปลี่ยน Default เป็น Visitor ให้เข้ากับบริบทตั๋ว
     invitee: ''
   };
 
   typeOptions = [
-    { label: 'Meeting', value: 'Meeting' },
-    { label: 'Maintenance', value: 'Maintenance' },
-    { label: 'Visit', value: 'Visit' }
+    { label: 'Visitor', value: 'Visitor' },
+    { label: 'Contractor', value: 'Contractor' },
+    { label: 'VIP', value: 'VIP' },
+    { label: 'Maintenance', value: 'Maintenance' }
   ];
 
   constructor(
@@ -92,34 +91,32 @@ export class CardComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService
   ) {
-    // กำหนดค่า SupabaseClient สำหรับ Realtime เท่านั้น (ไม่ได้ใช้ดึงข้อมูลตรงๆ)
-    this.supabase = createClient(environment.supabaseUrl2, environment.supabaseKey2);
+    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
   }
 
+  // ... ไปที่ ngOnInit() เพิ่มคำสั่งโหลดข้อมูล
   async ngOnInit() {
     this.loadReservations(); 
+    this.loadDoorAccess(); // 🚀 เรียกใช้งานตรงนี้
     this.loadUsersForDropdown(); 
     this.loadBuildings();
-    this.setupRealtimeSubscription(); // เปิดการรับข้อมูล Realtime
+    this.setupRealtimeSubscription(); 
   }
 
   ngOnDestroy() {
-    // คืนค่าหน่วยความจำ ลบ Subscription เมื่อปิดหน้าเว็บ
     if (this.realtimeChannel) {
       this.supabase.removeChannel(this.realtimeChannel);
     }
   }
 
-  // ✅ ฟังก์ชันจับตาดู Database (ถ้าตาราง reservations มีการอัปเดต จะเรียกโหลดตารางใหม่)
   setupRealtimeSubscription() {
     this.realtimeChannel = this.supabase
-      .channel('public:reservations')
+      .channel('public:access_tickets') // ✅ เปลี่ยนมาดักฟังตาราง access_tickets
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'reservations' },
-        // 🚀 แก้ไขจุดที่ 3: ระบุให้ payload มี type เป็น any
+        { event: '*', schema: 'public', table: 'access_tickets' }, // ✅
         (payload: any) => {
-          console.log('🔄 ข้อมูลมีการเปลี่ยนแปลงบน Database (Realtime):', payload);
+          console.log('🔄 ข้อมูลตั๋วเข้าออกมีการเปลี่ยนแปลง (Realtime):', payload);
           this.loadReservations(); 
         }
       )
@@ -135,63 +132,52 @@ export class CardComponent implements OnInit, OnDestroy {
     });
   }
 
-loadReservations() {
+  loadReservations() {
     this.loading = true;
-
-    // 🚀 เปลี่ยนมาเรียก API จาก NestJS
     this.reservationService.getAllReservations().subscribe({
       next: (data: any[]) => {
-        
-        // ข้อมูลจาก NestJS ได้ถูกจัด Format (เช่น วันที่) มาให้แล้ว นำไปใช้ได้เลย
         this.allReservations = data.map(r => ({
           ...r, 
           _raw: { id: r.id } 
         }));
 
-        // 🚀 เรียกฟังก์ชันคำนวณ Metrics เอง (เพราะ NestJS ไม่ได้คำนวณมาให้)
         this.calculateMetrics(this.allReservations);
-
-        // อัปเดตตารางตาม Filter
         this.filterReservations(this.selectedFilter);
         
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error fetching reservations:', err);
-        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ดึงข้อมูลไม่สำเร็จ' });
+        console.error('Error fetching tickets:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ดึงข้อมูลตั๋วเข้าออกไม่สำเร็จ' });
         this.loading = false;
       }
     });
   }
 
-  // ✅ เอาฟังก์ชันคำนวณ Metrics กลับมา (ดัดแปลงคำให้ตรงกับ Filter)
+  // ✅ แก้ไขคำใน Metrics เป็น "ตั๋ว"
   calculateMetrics(data: any[]) {
     const total = data.length;
-    // สมมติว่าใน DB คุณเก็บ status เป็น 'รออนุมัติ', 'จองล่วงหน้า', 'กำลังใช้งาน', 'เสร็จสิ้น', ฯลฯ
-    const pending = data.filter(r => r.status === 'รออนุมัติ' || r.status === 'จองล่วงหน้า' || r.status === 'ยังไม่ใช้งาน').length;
-    const active = data.filter(r => r.status === 'ใช้งานแล้ว' || r.status === 'กำลังใช้งาน').length;
-    const inactive = data.filter(r => r.status === 'ปฏิเสธ' || r.status === 'หมดอายุ' || r.status === 'ยกเลิก').length;
+    const pending = data.filter(r => r.status === 'รออนุมัติ' || r.status === 'ยังไม่ใช้งาน').length;
+    const active = data.filter(r => r.status === 'ใช้งานแล้ว' || r.status === 'กำลังใช้งาน' || r.status === 'อนุมัติแล้ว').length;
+    const inactive = data.filter(r => r.status === 'ปฏิเสธ' || r.status === 'หมดอายุ' || r.status === 'ยกเลิก' || r.status === 'เสร็จสิ้น').length;
 
     this.metrics = [
-      { title: 'รายการจองทั้งหมด', value: total.toLocaleString(), subtext: 'Total Requests', icon: 'pi pi-users', color: 'blue' },
-      { title: 'การจองที่ยังไม่ถึงเวลา', value: pending.toLocaleString(), subtext: 'Pending/Upcoming', icon: 'pi pi-clock', color: 'yellow' },
-      { title: 'การจองที่ถึงกำหนด', value: active.toLocaleString(), subtext: 'Active/Completed', icon: 'pi pi-check-circle', color: 'green' },
-      { title: 'การจองที่หมดอายุ', value: inactive.toLocaleString(), subtext: 'Rejected/Canceled', icon: 'pi pi-exclamation-circle', color: 'gray' }
+      { title: 'ตั๋วเข้าออกทั้งหมด', value: total.toLocaleString(), subtext: 'Total Tickets', icon: 'pi pi-ticket', color: 'blue' },
+      { title: 'ตั๋วที่ยังไม่ถึงเวลา', value: pending.toLocaleString(), subtext: 'Pending/Upcoming', icon: 'pi pi-clock', color: 'yellow' },
+      { title: 'ตั๋วที่ใช้งานได้', value: active.toLocaleString(), subtext: 'Active/Approved', icon: 'pi pi-check-circle', color: 'green' },
+      { title: 'ตั๋วที่หมดอายุ/ปฏิเสธ', value: inactive.toLocaleString(), subtext: 'Expired/Rejected', icon: 'pi pi-times-circle', color: 'gray' }
     ];
   }
 
-  // 💡 ปรับฟังก์ชัน applyFilters() ให้ตรงกับคำที่ Edge Function ส่งมา
-  // ✅ ใช้ applyFilters ตัวนี้แค่ตัวเดียวเท่านั้น
+  // ✅ แมปคำกรองให้ตรงกับ Metrics
   applyFilters() {
     let filtered = [...this.allReservations];
     
-    // อิงตาม title ของ Metrics ที่ Edge Function ส่งมา (ใน response.metrics)
     const statusMap: { [key: string]: string | string[] } = {
-      'รายการจอง': 'ALL',
-      'รายการจองทั้งหมด': 'ALL', // เผื่อไว้เผื่อกดจาก Tab เดิม
-      'การจองที่ถึงกำหนด': ['ใช้งานแล้ว', 'กำลังใช้งาน'], 
-      'การจองที่ยังไม่ถึงเวลา': ['ยังไม่ใช้งาน', 'จองล่วงหน้า'],
-      'การจองที่หมดอายุ': ['หมดอายุ', 'ยกเลิก']
+      'ตั๋วเข้าออกทั้งหมด': 'ALL',
+      'ตั๋วที่ใช้งานได้': ['ใช้งานแล้ว', 'กำลังใช้งาน', 'อนุมัติแล้ว'], 
+      'ตั๋วที่ยังไม่ถึงเวลา': ['ยังไม่ใช้งาน', 'รออนุมัติ'],
+      'ตั๋วที่หมดอายุ/ปฏิเสธ': ['หมดอายุ', 'ยกเลิก', 'ปฏิเสธ', 'เสร็จสิ้น']
     };
 
     const targetStatus = statusMap[this.selectedFilter] || 'ALL';
@@ -218,12 +204,11 @@ loadReservations() {
     
     this.reservationService.updateReservation(targetId, payload).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนสถานะเป็น "${newStatus}" เรียบร้อยแล้ว` });
-        // หมายเหตุ: เราไม่จำเป็นต้องเรียก loadReservations() ตรงนี้อีก เพราะ Realtime จะทำงานแทน
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: `เปลี่ยนสถานะตั๋วเป็น "${newStatus}" เรียบร้อยแล้ว` });
       },
       error: (err) => {
-        console.error('Error updating status:', err);
-        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถอัปเดตสถานะได้' });
+        console.error('Error updating ticket status:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถอัปเดตสถานะตั๋วได้' });
       }
     });
   }
@@ -269,8 +254,8 @@ loadReservations() {
     const buttonClass = newStatus === 'อนุมัติแล้ว' ? 'p-button-success' : 'p-button-danger';
 
     this.confirmationService.confirm({
-      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> สิทธิ์การเข้าอาคารของ <b>${reservation.user}</b>?`,
-      header: `ยืนยันการ${actionText}`,
+      message: `คุณแน่ใจหรือไม่ที่จะ <b>${actionText}</b> ตั๋วเข้าออกอาคารของ <b>${reservation.user}</b>?`, // ✅ เปลี่ยนเป็นตั๋ว
+      header: `ยืนยันการ${actionText}ตั๋ว`,
       icon: iconClass,
       acceptLabel: 'ยืนยัน',
       rejectLabel: 'ยกเลิก',
@@ -286,7 +271,7 @@ loadReservations() {
     this.displayAddModal = true;
     this.newRes = { 
         user: null, date: null, startTime: null, endTime: null, time: '', 
-        selectedBuilding: null, room: null, type: 'Meeting', invitee: '' 
+        selectedBuilding: null, room: null, type: 'Visitor', invitee: '' 
     };
     this.roomGroupOptions = [];
   }
@@ -322,24 +307,22 @@ loadReservations() {
         building_id: this.newRes.selectedBuilding.name,
         room_id: this.newRes.room,
         pass_type: this.newRes.type,
-        invite_code: this.newRes.invitee || `INV-${Math.floor(Math.random() * 10000)}`, // จำลองรหัสเชิญถ้าไม่มี
+        invite_code: this.newRes.invitee || `INV-${Math.floor(Math.random() * 10000)}`,
         status: 'รออนุมัติ' 
     };
 
     this.reservationService.createReservation(payload).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: 'เพิ่มการจองเรียบร้อย' });
+        this.messageService.add({ severity: 'success', summary: 'สำเร็จ', detail: 'สร้างตั๋วเข้าออกเรียบร้อยแล้ว' }); // ✅ เปลี่ยนคำ
         this.displayAddModal = false;
-        // ไม่ต้อง this.loadReservations() เพราะมี Realtime อยู่แล้ว
       },
       error: (err) => {
-        console.error('Error creating reservation:', err);
-        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถสร้างการจองได้' });
+        console.error('Error creating ticket:', err);
+        this.messageService.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'ไม่สามารถสร้างตั๋วเข้าออกได้' });
       }
     });
   }
 
-  // ✅ ระบบค้นหาและตัวกรอง Tab 
   filterReservations(title: string) {
     this.selectedFilter = title;
     this.applyFilters();
@@ -354,7 +337,6 @@ loadReservations() {
     this.applyFilters();
   }
 
-  // ✅ ระบบจัดเรียงวันที่ภาษาไทยที่แม่นยำ
   customSort(event: SortEvent) {
     if (!event.data || !event.field) return;
 
@@ -429,9 +411,71 @@ loadReservations() {
     }
   }
 
-  // ✅ เพิ่มฟังก์ชันจัดการสีตัวหนังสือของ Metric
   getMetricTextClass(metric: any, shade: number): string {
     const color = metric.color || 'blue';
     return `text-${color}-${shade}`;
   }
+doorAccessList: any[] = []; // 🚀 เก็บข้อมูลประตู
+
+  
+
+  // 🚀 เพิ่มฟังก์ชันสำหรับโหลดข้อมูลจาก Service
+  loadDoorAccess() {
+    this.reservationService.getDoorAccess().subscribe({
+      next: (data) => {
+        this.doorAccessList = data;
+      },
+      error: (err) => console.error('Error fetching door access:', err)
+    });
+  }
+
+  // 🚀 1. กำหนดลำดับขั้นของสถานะตั๋ว (Flow Stages)
+  statusStages = ['รออนุมัติ', 'อนุมัติแล้ว', 'กำลังใช้งาน', 'เสร็จสิ้น'];
+
+  // เช็คว่าเดินหน้าได้ไหม (ต้องไม่ใช่อันสุดท้าย)
+  canGoForward(status: string): boolean {
+    const idx = this.statusStages.indexOf(status);
+    return idx >= 0 && idx < this.statusStages.length - 1;
+  }
+
+  // เช็คว่าถอยหลังได้ไหม (ต้องไม่ใช่อันแรก)
+  canGoBackward(status: string): boolean {
+    const idx = this.statusStages.indexOf(status);
+    return idx > 0;
+  }
+
+  // กดปุ่มเดินหน้า
+  goForward(reservation: any) {
+    const idx = this.statusStages.indexOf(reservation.status);
+    if (idx >= 0 && idx < this.statusStages.length - 1) {
+      const nextStatus = this.statusStages[idx + 1];
+      this.confirmStatusChange(reservation, nextStatus, 'เลื่อนไปขั้นถัดไป');
+    }
+  }
+
+  // กดปุ่มถอยหลัง
+  goBackward(reservation: any) {
+    const idx = this.statusStages.indexOf(reservation.status);
+    if (idx > 0) {
+      const prevStatus = this.statusStages[idx - 1];
+      this.confirmStatusChange(reservation, prevStatus, 'ย้อนกลับสถานะ');
+    }
+  }
+
+  // 🚀 2. ฟังก์ชันยืนยันการเปลี่ยนสถานะแบบครอบจักรวาล
+  confirmStatusChange(reservation: any, newStatus: string, actionName: string) {
+    const isDanger = newStatus === 'ปฏิเสธ' || newStatus === 'ยกเลิก';
+    this.confirmationService.confirm({
+      message: `คุณแน่ใจหรือไม่ที่จะ<b>${actionName}</b>ของ <b>${reservation.user}</b><br>จาก "${reservation.status}" เป็น <b>"${newStatus}"</b>?`,
+      header: `ยืนยันการเปลี่ยนสถานะ`,
+      icon: isDanger ? 'pi pi-exclamation-triangle text-red-500' : 'pi pi-info-circle text-blue-500',
+      acceptLabel: 'ยืนยัน',
+      rejectLabel: 'ยกเลิก',
+      acceptButtonStyleClass: isDanger ? 'p-button-danger' : 'p-button-primary',
+      accept: () => {
+        this.updateStatus(reservation, newStatus);
+      }
+    });
+  }
+  
 }
