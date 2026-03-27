@@ -40,6 +40,15 @@
   font-size: 0.9rem;
 }
 
+.camera-select {
+  display: grid;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 600;
+  }
+}
+
 .scan-button {
   width: 100%;
 }

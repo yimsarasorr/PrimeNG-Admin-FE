@@ -3,6 +3,7 @@ import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { DropdownModule } from 'primeng/dropdown';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastController } from '@ionic/angular';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -16,15 +17,27 @@ interface AccessQrPayload {
 
 type GateMode = 'GATE_IN' | 'GATE_OUT';
 
+interface CameraOption {
+  label: string;
+  value: string;
+}
+
+interface CameraDevice {
+  id: string;
+  label: string;
+}
+
 @Component({
   selector: 'app-video-scanner',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, CardModule, SelectButtonModule],
+  imports: [CommonModule, FormsModule, ButtonModule, CardModule, DropdownModule, SelectButtonModule],
   templateUrl: './video-scanner.component.html',
   styleUrl: './video-scanner.component.scss'
 })
 export class VideoScannerComponent implements AfterViewInit, OnDestroy {
   selectedMode: GateMode = 'GATE_IN';
+  selectedCameraId: string | null = null;
+  cameraOptions: CameraOption[] = [];
   isScanning = false;
   isBusy = false;
   lastPayload: AccessQrPayload | null = null;
@@ -56,6 +69,15 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
     void this.stopScanner();
   }
 
+  async onCameraChange(): Promise<void> {
+    if (!this.selectedCameraId || this.isBusy || !this.isScanning) {
+      return;
+    }
+
+    await this.stopScanner();
+    await this.startScanner();
+  }
+
   async toggleScanner(): Promise<void> {
     if (this.isBusy) {
       return;
@@ -84,11 +106,15 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
         return;
       }
 
-      const cameras = await Html5Qrcode.getCameras();
+      const cameras = await this.getAvailableCameras();
       if (!cameras.length) {
         this.cameraError = 'ไม่พบกล้องในอุปกรณ์นี้';
         await this.presentToast(this.cameraError, 'warning');
         return;
+      }
+
+      if (!this.selectedCameraId) {
+        this.selectedCameraId = this.pickDefaultCameraId(cameras);
       }
 
       if (!this.qrScanner) {
@@ -96,7 +122,7 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
       }
 
       await this.qrScanner.start(
-        { deviceId: { exact: cameras[0].id } },
+        { deviceId: { exact: this.selectedCameraId } },
         {
           fps: 10,
           qrbox: { width: 240, height: 240 },
@@ -118,6 +144,25 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
     } finally {
       this.isBusy = false;
     }
+  }
+
+  private async getAvailableCameras(): Promise<CameraDevice[]> {
+    const cameras = await Html5Qrcode.getCameras();
+
+    this.cameraOptions = cameras.map((camera, index) => ({
+      label: camera.label?.trim() || `Camera ${index + 1}`,
+      value: camera.id
+    }));
+
+    return cameras;
+  }
+
+  private pickDefaultCameraId(cameras: CameraDevice[]): string {
+    const rearCamera = cameras.find((camera) =>
+      /(back|rear|environment|traseira|arriere|hinten|หลัง|後置|后置)/i.test(camera.label)
+    );
+
+    return (rearCamera || cameras[0]).id;
   }
 
   private async stopScanner(): Promise<void> {

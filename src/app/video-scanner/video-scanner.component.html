@@ -21,6 +21,20 @@
         ใช้ประตู: <strong>{{ selectedDoorId }}</strong>
       </div>
 
+      <div class="camera-select" *ngIf="cameraOptions.length">
+        <label for="camera-select">เลือกกล้อง</label>
+        <p-dropdown
+          inputId="camera-select"
+          [options]="cameraOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedCameraId"
+          [disabled]="isBusy"
+          placeholder="เลือกกล้อง"
+          (onChange)="onCameraChange()"
+        ></p-dropdown>
+      </div>
+
       <button
         pButton
         type="button"
