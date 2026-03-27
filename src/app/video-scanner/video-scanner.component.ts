@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { ToastController } from '@ionic/angular';
+import { Html5Qrcode } from 'html5-qrcode';
 import { SupabaseService } from '../service/supabase.service';
 
 interface AccessQrPayload {
@@ -23,10 +23,16 @@ type GateMode = 'GATE_IN' | 'GATE_OUT';
   templateUrl: './video-scanner.component.html',
   styleUrl: './video-scanner.component.scss'
 })
-export class VideoScannerComponent {
+export class VideoScannerComponent implements AfterViewInit, OnDestroy {
   selectedMode: GateMode = 'GATE_IN';
   isScanning = false;
+  isBusy = false;
   lastPayload: AccessQrPayload | null = null;
+  cameraError = '';
+
+  private qrScanner: Html5Qrcode | null = null;
+  private lastScanText = '';
+  private lastScanAt = 0;
 
   readonly modeOptions = [
     { label: 'Check-in (ทางเข้า)', value: 'GATE_IN' },
@@ -42,36 +48,109 @@ export class VideoScannerComponent {
     return this.selectedMode;
   }
 
-  async scanQrCode(): Promise<void> {
-    if (this.isScanning) {
+  ngAfterViewInit(): void {
+    void this.startScanner();
+  }
+
+  ngOnDestroy(): void {
+    void this.stopScanner();
+  }
+
+  async toggleScanner(): Promise<void> {
+    if (this.isBusy) {
       return;
     }
 
-    this.isScanning = true;
+    if (this.isScanning) {
+      await this.stopScanner();
+      return;
+    }
+
+    await this.startScanner();
+  }
+
+  private async startScanner(): Promise<void> {
+    if (this.isScanning || this.isBusy) {
+      return;
+    }
+
+    this.isBusy = true;
+    this.cameraError = '';
 
     try {
-      const supportResult = await BarcodeScanner.isSupported();
-      if (!supportResult.supported) {
-        await this.presentToast('อุปกรณ์นี้ยังไม่รองรับการสแกน QR', 'warning');
+      if (!window.isSecureContext) {
+        this.cameraError = 'ต้องเปิดผ่าน HTTPS เพื่อใช้งานกล้องบนเบราว์เซอร์';
+        await this.presentToast(this.cameraError, 'warning');
         return;
       }
 
-      const permissionResult = await BarcodeScanner.requestPermissions();
-      if (permissionResult.camera !== 'granted') {
-        await this.presentToast('ต้องอนุญาตสิทธิ์กล้องก่อนใช้งาน', 'warning');
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras.length) {
+        this.cameraError = 'ไม่พบกล้องในอุปกรณ์นี้';
+        await this.presentToast(this.cameraError, 'warning');
         return;
       }
 
-      const result = await BarcodeScanner.scan({
-        formats: [BarcodeFormat.QrCode]
-      });
-
-      const rawValue = result.barcodes?.[0]?.rawValue;
-      if (!rawValue) {
-        await this.presentToast('ไม่พบข้อมูลใน QR Code', 'warning');
-        return;
+      if (!this.qrScanner) {
+        this.qrScanner = new Html5Qrcode('reader', { verbose: false });
       }
 
+      await this.qrScanner.start(
+        { deviceId: { exact: cameras[0].id } },
+        {
+          fps: 10,
+          qrbox: { width: 240, height: 240 },
+          aspectRatio: 1
+        },
+        (decodedText: string) => {
+          void this.handleDecodedText(decodedText);
+        },
+        () => {
+          // Ignore per-frame decode errors while waiting for a valid QR code.
+        }
+      );
+
+      this.isScanning = true;
+    } catch (error: unknown) {
+      this.cameraError = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างเปิดกล้อง';
+      const message = this.cameraError;
+      await this.presentToast(message, 'danger');
+    } finally {
+      this.isBusy = false;
+    }
+  }
+
+  private async stopScanner(): Promise<void> {
+    if (!this.qrScanner || !this.isScanning) {
+      this.isScanning = false;
+      return;
+    }
+
+    this.isBusy = true;
+
+    try {
+      await this.qrScanner.stop();
+      await this.qrScanner.clear();
+    } catch {
+      // Ignore cleanup errors so UI can recover and restart scanning.
+    } finally {
+      this.qrScanner = null;
+      this.isScanning = false;
+      this.isBusy = false;
+    }
+  }
+
+  private async handleDecodedText(rawValue: string): Promise<void> {
+    const now = Date.now();
+    if (this.isBusy || (this.lastScanText === rawValue && now - this.lastScanAt < 3000)) {
+      return;
+    }
+
+    this.lastScanText = rawValue;
+    this.lastScanAt = now;
+    this.isBusy = true;
+
+    try {
       const payload = this.parsePayload(rawValue);
       if (!payload) {
         return;
@@ -94,10 +173,10 @@ export class VideoScannerComponent {
       const message = displayName ? `${actionText}: ${displayName}` : actionText;
       await this.presentToast(message, 'success');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างการสแกน';
+      const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างประมวลผล QR';
       await this.presentToast(message, 'danger');
     } finally {
-      this.isScanning = false;
+      this.isBusy = false;
     }
   }
 

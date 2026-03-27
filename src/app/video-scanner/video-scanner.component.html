@@ -24,13 +24,16 @@
       <button
         pButton
         type="button"
-        [label]="isScanning ? 'กำลังสแกน...' : 'สแกน QR Code'"
+        [label]="isScanning ? 'หยุดกล้อง' : 'เริ่มกล้องเพื่อสแกน'"
         icon="pi pi-qrcode"
-        [loading]="isScanning"
-        [disabled]="isScanning"
+        [loading]="isBusy"
+        [disabled]="isBusy"
         class="scan-button"
-        (click)="scanQrCode()"
+        (click)="toggleScanner()"
       ></button>
+
+      <div id="reader" class="reader-box" aria-live="polite"></div>
+      <small class="camera-error" *ngIf="cameraError">{{ cameraError }}</small>
 
       <div class="last-payload" *ngIf="lastPayload as payload">
         <h4>ข้อมูลล่าสุดที่สแกนได้</h4>
