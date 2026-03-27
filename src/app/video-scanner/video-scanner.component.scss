@@ -68,6 +68,25 @@
   color: #b91c1c;
 }
 
+.scan-status {
+  display: block;
+  color: #334155;
+}
+
+.raw-preview {
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  word-break: break-word;
+
+  h4 {
+    margin: 0 0 0.45rem;
+    font-family: inherit;
+  }
+}
+
 :host ::ng-deep #reader {
   border: 0 !important;
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -13,6 +13,17 @@ interface AccessQrPayload {
   accessId: string;
   doorId: string;
   validUntil: string;
+}
+
+interface AccessQrPayloadRaw {
+  type?: string;
+  v?: number;
+  accessId?: string;
+  access_id?: string;
+  doorId?: string;
+  door_id?: string;
+  validUntil?: string;
+  valid_until?: string;
 }
 
 type GateMode = 'GATE_IN' | 'GATE_OUT';
@@ -41,6 +52,8 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
   isScanning = false;
   isBusy = false;
   lastPayload: AccessQrPayload | null = null;
+  lastRawValue = '';
+  scanStatus = 'รอสแกน QR';
   cameraError = '';
 
   private qrScanner: Html5Qrcode | null = null;
@@ -54,7 +67,8 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private readonly supabaseService: SupabaseService,
-    private readonly toastController: ToastController
+    private readonly toastController: ToastController,
+    private readonly ngZone: NgZone
   ) {}
 
   get selectedDoorId(): GateMode {
@@ -79,12 +93,12 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
   }
 
   async toggleScanner(): Promise<void> {
-    if (this.isBusy) {
+    if (this.isScanning) {
+      await this.stopScanner();
       return;
     }
 
-    if (this.isScanning) {
-      await this.stopScanner();
+    if (this.isBusy) {
       return;
     }
 
@@ -102,6 +116,7 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
     try {
       if (!window.isSecureContext) {
         this.cameraError = 'ต้องเปิดผ่าน HTTPS เพื่อใช้งานกล้องบนเบราว์เซอร์';
+        this.scanStatus = this.cameraError;
         await this.presentToast(this.cameraError, 'warning');
         return;
       }
@@ -109,6 +124,7 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
       const cameras = await this.getAvailableCameras();
       if (!cameras.length) {
         this.cameraError = 'ไม่พบกล้องในอุปกรณ์นี้';
+        this.scanStatus = this.cameraError;
         await this.presentToast(this.cameraError, 'warning');
         return;
       }
@@ -129,7 +145,9 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
           aspectRatio: 1
         },
         (decodedText: string) => {
-          void this.handleDecodedText(decodedText);
+          this.ngZone.run(() => {
+            void this.handleDecodedText(decodedText);
+          });
         },
         () => {
           // Ignore per-frame decode errors while waiting for a valid QR code.
@@ -137,9 +155,11 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
       );
 
       this.isScanning = true;
+      this.scanStatus = 'กำลังสแกน...';
     } catch (error: unknown) {
       this.cameraError = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างเปิดกล้อง';
       const message = this.cameraError;
+      this.scanStatus = message;
       await this.presentToast(message, 'danger');
     } finally {
       this.isBusy = false;
@@ -165,7 +185,7 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
     return (rearCamera || cameras[0]).id;
   }
 
-  private async stopScanner(): Promise<void> {
+  private async stopScanner(statusOnStop = 'หยุดสแกนแล้ว'): Promise<void> {
     if (!this.qrScanner || !this.isScanning) {
       this.isScanning = false;
       return;
@@ -182,6 +202,7 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
       this.qrScanner = null;
       this.isScanning = false;
       this.isBusy = false;
+      this.scanStatus = statusOnStop;
     }
   }
 
@@ -193,6 +214,8 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
 
     this.lastScanText = rawValue;
     this.lastScanAt = now;
+  this.lastRawValue = rawValue;
+  this.scanStatus = 'อ่าน QR สำเร็จ กำลังตรวจสอบข้อมูล...';
     this.isBusy = true;
 
     try {
@@ -216,9 +239,11 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
       const displayName = this.extractUserName(data);
       const actionText = this.selectedDoorId === 'GATE_IN' ? 'เช็คอินสำเร็จ' : 'เช็คเอาท์สำเร็จ';
       const message = displayName ? `${actionText}: ${displayName}` : actionText;
+      await this.stopScanner(message);
       await this.presentToast(message, 'success');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาดระหว่างประมวลผล QR';
+      this.scanStatus = message;
       await this.presentToast(message, 'danger');
     } finally {
       this.isBusy = false;
@@ -227,29 +252,39 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
 
   private parsePayload(rawValue: string): AccessQrPayload | null {
     try {
-      const parsed = JSON.parse(rawValue) as Partial<AccessQrPayload>;
-      const accessId = parsed.accessId?.trim();
-      const doorId = parsed.doorId?.trim();
-      const validUntil = parsed.validUntil?.trim();
+      const parsed = JSON.parse(rawValue) as AccessQrPayloadRaw;
+      const accessId = (parsed.accessId || parsed.access_id || '').trim();
+      const doorId = (parsed.doorId || parsed.door_id || '').trim();
+      const validUntil = (parsed.validUntil || parsed.valid_until || '').trim();
 
       if (!accessId || !doorId || !validUntil) {
+        this.scanStatus = 'รูปแบบ QR ไม่ถูกต้อง (ข้อมูลไม่ครบ)';
         void this.presentToast('รูปแบบ QR ไม่ถูกต้อง (ข้อมูลไม่ครบ)', 'danger');
+        return null;
+      }
+
+      if (parsed.type && parsed.type !== 'gate_access') {
+        this.scanStatus = 'QR ประเภทนี้ไม่รองรับ';
+        void this.presentToast('QR ประเภทนี้ไม่รองรับ', 'danger');
         return null;
       }
 
       const expiryTime = new Date(validUntil).getTime();
       if (Number.isNaN(expiryTime)) {
+        this.scanStatus = 'รูปแบบเวลาใน QR ไม่ถูกต้อง';
         void this.presentToast('รูปแบบเวลาใน QR ไม่ถูกต้อง', 'danger');
         return null;
       }
 
       if (expiryTime < Date.now()) {
+        this.scanStatus = 'รหัสหมดอายุแล้ว';
         void this.presentToast('รหัสหมดอายุแล้ว', 'danger');
         return null;
       }
 
       return { accessId, doorId, validUntil };
     } catch {
+      this.scanStatus = 'ข้อมูล QR ไม่ใช่ JSON ที่รองรับ';
       void this.presentToast('ข้อมูล QR ไม่ใช่ JSON ที่รองรับ', 'danger');
       return null;
     }
@@ -281,15 +316,18 @@ export class VideoScannerComponent implements AfterViewInit, OnDestroy {
     const lowered = rawMessage.toLowerCase();
 
     if (lowered.includes('expired')) {
+      this.scanStatus = 'รหัสหมดอายุแล้ว';
       await this.presentToast('รหัสหมดอายุแล้ว', 'danger');
       return;
     }
 
     if (lowered.includes('invalid')) {
+      this.scanStatus = 'QR ไม่ถูกต้องหรือไม่สามารถใช้งานได้';
       await this.presentToast('QR ไม่ถูกต้องหรือไม่สามารถใช้งานได้', 'danger');
       return;
     }
 
+    this.scanStatus = `ไม่สามารถเช็คสิทธิ์ได้: ${rawMessage}`;
     await this.presentToast(`ไม่สามารถเช็คสิทธิ์ได้: ${rawMessage}`, 'danger');
   }
 

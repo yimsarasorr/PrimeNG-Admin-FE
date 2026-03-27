@@ -40,14 +40,20 @@
         type="button"
         [label]="isScanning ? 'หยุดกล้อง' : 'เริ่มกล้องเพื่อสแกน'"
         icon="pi pi-qrcode"
-        [loading]="isBusy"
-        [disabled]="isBusy"
+        [loading]="isBusy && !isScanning"
+        [disabled]="isBusy && !isScanning"
         class="scan-button"
         (click)="toggleScanner()"
       ></button>
 
       <div id="reader" class="reader-box" aria-live="polite"></div>
       <small class="camera-error" *ngIf="cameraError">{{ cameraError }}</small>
+      <small class="scan-status">สถานะ: {{ scanStatus }}</small>
+
+      <div class="raw-preview" *ngIf="lastRawValue">
+        <h4>Raw จาก QR</h4>
+        <div>{{ lastRawValue }}</div>
+      </div>
 
       <div class="last-payload" *ngIf="lastPayload as payload">
         <h4>ข้อมูลล่าสุดที่สแกนได้</h4>
