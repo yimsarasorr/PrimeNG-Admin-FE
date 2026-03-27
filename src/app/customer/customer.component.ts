@@ -72,7 +72,9 @@ export class CustomerComponent implements OnInit {
             return { ...m, icon };
           });
 
-          this.users = (res.profiles || []).map((p: any) => {
+          this.users = (res.profiles || [])
+            .filter((p: any) => p.name || p.email) // Filter out users with no name or email
+            .map((p: any) => {
             let cat = 'External';
             const roleLower = (p.role || '').toLowerCase();
             
