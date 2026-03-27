@@ -44,6 +44,40 @@
   width: 100%;
 }
 
+.reader-box {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.camera-error {
+  display: block;
+  color: #b91c1c;
+}
+
+:host ::ng-deep #reader {
+  border: 0 !important;
+}
+
+:host ::ng-deep #reader video {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 60vh;
+  object-fit: cover;
+}
+
+:host ::ng-deep #reader__scan_region {
+  min-height: 220px;
+}
+
+:host ::ng-deep #reader__dashboard {
+  display: none;
+}
+
 .last-payload {
   padding: 0.85rem;
   border-radius: 10px;
