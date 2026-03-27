@@ -82,7 +82,7 @@ export class AppComponent implements OnInit, OnDestroy {
       { label: 'อาคาร', icon: 'pi pi-building', route: '/buildings' },
       { label: 'จัดการการจอง', icon: 'pi pi-th-large', route: '/reserve' },
       { label: 'จัดการผู้ใช้งาน', icon: 'pi pi-user', route: '/customer' },
-      { label: 'Video', icon: 'pi pi-video', route: '/video' }
+      { label: 'Scan QR', icon: 'pi pi-qrcode', route: '/video' }
     ];
 
     this.bottomMenu = [

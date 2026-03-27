@@ -5,6 +5,7 @@ import { CustomerComponent } from './customer/customer.component';
 import { CardComponent } from './card/card.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { VideoScannerComponent } from './video-scanner/video-scanner.component';
 
 // ✅ 1. Import the Guard
 import { authGuard } from './auth.guard'; 
@@ -37,6 +38,11 @@ export const routes: Routes = [
     path: 'reserve', 
     component: CardComponent, 
     canActivate: [authGuard] 
+  },
+  {
+    path: 'video',
+    component: VideoScannerComponent,
+    canActivate: [authGuard]
   },
  
 ];

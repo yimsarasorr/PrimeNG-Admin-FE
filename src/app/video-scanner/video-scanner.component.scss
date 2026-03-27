@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+.scanner-page {
+  padding: 1rem;
+}
+
+.scanner-header {
+  padding: 1rem 1rem 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+  }
+}
+
+.scanner-content {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.mode-label {
+  font-weight: 600;
+}
+
+.door-pill {
+  width: fit-content;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 0.9rem;
+}
+
+.scan-button {
+  width: 100%;
+}
+
+.last-payload {
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  word-break: break-word;
+
+  h4 {
+    margin: 0 0 0.45rem;
+    font-family: inherit;
+  }
+}
+
+@media (min-width: 768px) {
+  .scanner-page {
+    max-width: 720px;
+  }
+}

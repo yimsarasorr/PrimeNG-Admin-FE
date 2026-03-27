@@ -13,6 +13,7 @@ import { authInterceptor } from './interceptors/auth.interceptor';
 import { definePreset } from '@primeuix/themes';
 import Aura from "@primeuix/themes/aura";
 import { DynamicDialogModule, DialogService } from "primeng/dynamicdialog";
+import { provideIonicAngular } from '@ionic/angular/standalone';
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -48,6 +49,7 @@ export const appConfig: ApplicationConfig = {
     }),
     importProvidersFrom(DynamicDialogModule),
     DialogService,
+    provideIonicAngular(),
 
     // ✅ ตรงนี้จะหายแดงแล้ว เพราะเรา import มาครบแล้ว
     provideHttpClient(withInterceptors([authInterceptor])),
